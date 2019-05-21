@@ -1825,107 +1825,112 @@ public class PreHireManagerController {
 								logger.debug("confirmStatus.getId():" + confirmStatus.getId());
 								temp = confirmStatusService.findById(confirmStatus.getId());
 								logger.debug("ctemp:" + temp);
-								temp.setUpdatedOn(new Date());
-								/* SF Started */
-								temp.setSfEntityFlag("BEGIN");
-								confirmStatusService.update(temp);
-								timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-								logger.debug("before SF Updates" + timeStamp);
 
-								for (Map.Entry<String, String> entity : entityMap.entrySet()) {
+								if (temp.getPexUpdateFlag().equalsIgnoreCase("SUCCESS")) {// Perform SF posting only if
+																							// PEX is SUCCESS
+									temp.setUpdatedOn(new Date());
+									/* SF Started */
+									temp.setSfEntityFlag("BEGIN");
+									confirmStatusService.update(temp);
+									timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+									logger.debug("before SF Updates" + timeStamp);
 
-									if (!(entity.getKey().equalsIgnoreCase("cust_Additional_Information")
-											|| entity.getKey().equalsIgnoreCase("cust_personIdGenerate"))) {
+									for (Map.Entry<String, String> entity : entityMap.entrySet()) {
 
-										String getresponseJson = entityResponseMap.get(entity.getKey());
-										if (getresponseJson != null) {
-											JSONObject getresponseJsonObject = new JSONObject(getresponseJson);
-											// logger.debug("getresponseJson"+getresponseJson);
-											if (getresponseJsonObject.getJSONObject("d").getJSONArray("results")
-													.length() != 0) {
-												JSONObject getresultObj = getresponseJsonObject.getJSONObject("d")
-														.getJSONArray("results").getJSONObject(0);
+										if (!(entity.getKey().equalsIgnoreCase("cust_Additional_Information")
+												|| entity.getKey().equalsIgnoreCase("cust_personIdGenerate"))) {
 
-												if (entity.getKey().equalsIgnoreCase("PaymentInformationV3")) {
-													getresultObj.put("effectiveStartDate", map.get("startDate"));
-													JSONObject paymentInfoDetail = getresultObj
-															.getJSONObject("toPaymentInformationDetailV3")
+											String getresponseJson = entityResponseMap.get(entity.getKey());
+											if (getresponseJson != null) {
+												JSONObject getresponseJsonObject = new JSONObject(getresponseJson);
+												// logger.debug("getresponseJson"+getresponseJson);
+												if (getresponseJsonObject.getJSONObject("d").getJSONArray("results")
+														.length() != 0) {
+													JSONObject getresultObj = getresponseJsonObject.getJSONObject("d")
 															.getJSONArray("results").getJSONObject(0);
-													paymentInfoDetail.put("PaymentInformationV3_effectiveStartDate",
-															map.get("startDate"));
-													paymentInfoDetail.put("cust_notes", "Updated by Fast Hire App");
-													getresultObj.put("toPaymentInformationDetailV3", paymentInfoDetail);
-													getresultObj.put("cust_notes", "Updated by Fast Hire App");
-												} else if (entity.getKey().equalsIgnoreCase("EmpJob")) {
-													getresultObj.put("startDate", map.get("startDate"));
-													if (getresultObj.getString("countryOfCompany") != null) {
-														SFConstants employeeClassConst = sfConstantsService
-																.findById("employeeClassId_"
-																		+ getresultObj.getString("countryOfCompany"));
-														getresultObj.put("employeeClass",
-																employeeClassConst.getValue());
 
+													if (entity.getKey().equalsIgnoreCase("PaymentInformationV3")) {
+														getresultObj.put("effectiveStartDate", map.get("startDate"));
+														JSONObject paymentInfoDetail = getresultObj
+																.getJSONObject("toPaymentInformationDetailV3")
+																.getJSONArray("results").getJSONObject(0);
+														paymentInfoDetail.put("PaymentInformationV3_effectiveStartDate",
+																map.get("startDate"));
+														paymentInfoDetail.put("cust_notes", "Updated by Fast Hire App");
+														getresultObj.put("toPaymentInformationDetailV3",
+																paymentInfoDetail);
+														getresultObj.put("cust_notes", "Updated by Fast Hire App");
+													} else if (entity.getKey().equalsIgnoreCase("EmpJob")) {
+														getresultObj.put("startDate", map.get("startDate"));
+														if (getresultObj.getString("countryOfCompany") != null) {
+															SFConstants employeeClassConst = sfConstantsService
+																	.findById("employeeClassId_" + getresultObj
+																			.getString("countryOfCompany"));
+															getresultObj.put("employeeClass",
+																	employeeClassConst.getValue());
+
+														}
+
+														// remove countryOfCompany due to un
+														// upsertable field
+														getresultObj.remove("countryOfCompany");
+														getresultObj.remove("jobTitle");
+														getresultObj.remove("positionNav");
+														getresultObj.put("notes", "Updated by Fast Hire App");
+													} else if (entity.getKey()
+															.equalsIgnoreCase("EmpPayCompRecurring")) {
+														getresultObj.put("startDate", map.get("startDate"));
+														getresultObj.put("notes", "Updated by Fast hire app");
+													} else if (entity.getKey().equalsIgnoreCase("EmpCompensation")) {
+														getresultObj.put("startDate", map.get("startDate"));
+														getresultObj.put("notes", "Updated by Fast hire app");
+													} else if (entity.getKey().equalsIgnoreCase("PerAddressDEFLT")) {
+														getresultObj.put("startDate", map.get("startDate"));
+														getresultObj.put("notes", "Updated by Fast hire app");
 													}
 
-													// remove countryOfCompany due to un
-													// upsertable field
-													getresultObj.remove("countryOfCompany");
-													getresultObj.remove("jobTitle");
-													getresultObj.remove("positionNav");
-													getresultObj.put("notes", "Updated by Fast Hire App");
-												} else if (entity.getKey().equalsIgnoreCase("EmpPayCompRecurring")) {
-													getresultObj.put("startDate", map.get("startDate"));
-													getresultObj.put("notes", "Updated by Fast hire app");
-												} else if (entity.getKey().equalsIgnoreCase("EmpCompensation")) {
-													getresultObj.put("startDate", map.get("startDate"));
-													getresultObj.put("notes", "Updated by Fast hire app");
-												} else if (entity.getKey().equalsIgnoreCase("PerAddressDEFLT")) {
-													getresultObj.put("startDate", map.get("startDate"));
-													getresultObj.put("notes", "Updated by Fast hire app");
-												}
+													else if (entity.getKey().equalsIgnoreCase("PerPersonal")) {
+														getresultObj.put("notes", "Updated by Fast Hire App");
+														getresultObj.put("startDate", map.get("startDate"));
+													} else if (entity.getKey().equalsIgnoreCase("EmpEmployment")) {
+														getresultObj.put("notes", "Updated by Fast Hire App");
+														getresultObj.put("startDate", map.get("startDate"));
+													} else if (entity.getKey().equalsIgnoreCase("PerEmail")) {
+														getresultObj.put("customString1", "Updated by Fast Hire App");
+													} else if (entity.getKey().equalsIgnoreCase("PerPerson")) {
+														getresultObj.remove("perPersonUuid");
+														getresultObj.put("customString1", "Updated by Fast Hire App");
+													} else {
+														getresultObj.put("startDate", map.get("startDate"));
+													}
 
-												else if (entity.getKey().equalsIgnoreCase("PerPersonal")) {
-													getresultObj.put("notes", "Updated by Fast Hire App");
-													getresultObj.put("startDate", map.get("startDate"));
-												} else if (entity.getKey().equalsIgnoreCase("EmpEmployment")) {
-													getresultObj.put("notes", "Updated by Fast Hire App");
-													getresultObj.put("startDate", map.get("startDate"));
-												} else if (entity.getKey().equalsIgnoreCase("PerEmail")) {
-													getresultObj.put("customString1", "Updated by Fast Hire App");
-												} else if (entity.getKey().equalsIgnoreCase("PerPerson")) {
-													getresultObj.remove("perPersonUuid");
-													getresultObj.put("customString1", "Updated by Fast Hire App");
-												} else {
-													getresultObj.put("startDate", map.get("startDate"));
-												}
+													String postJsonString = getresultObj.toString();
 
-												String postJsonString = getresultObj.toString();
-
-												HttpResponse updateresponse = destClient.callDestinationPOST("/upsert",
-														"?$format=json&purgeType=full", postJsonString);
-												// String entityPostResponseJsonString =
-												// EntityUtils.toString(updateresponse.getEntity(),
-												// "UTF-8");
-												if (updateresponse.getStatusLine().getStatusCode() != 200) {
-													temp = confirmStatusService.findById(confirmStatus.getId());
-													temp.setUpdatedOn(new Date());
-													temp.setSfEntityFlag("FAILED");
-													temp.setEntityName(entity.getKey());
-													confirmStatusService.update(temp);
+													HttpResponse updateresponse = destClient.callDestinationPOST(
+															"/upsert", "?$format=json&purgeType=full", postJsonString);
+													// String entityPostResponseJsonString =
+													// EntityUtils.toString(updateresponse.getEntity(),
+													// "UTF-8");
+													if (updateresponse.getStatusLine().getStatusCode() != 200) {
+														temp = confirmStatusService.findById(confirmStatus.getId());
+														temp.setUpdatedOn(new Date());
+														temp.setSfEntityFlag("FAILED");
+														temp.setEntityName(entity.getKey());
+														confirmStatusService.update(temp);
+													}
+													// logger.debug(entity.getKey() + "
+													// updateresponse" + updateresponse);
 												}
-												// logger.debug(entity.getKey() + "
-												// updateresponse" + updateresponse);
 											}
 										}
 									}
+									if (!confirmStatus.getSfEntityFlag().equalsIgnoreCase("FAILED")) {
+										temp = confirmStatusService.findById(confirmStatus.getId());
+										temp.setUpdatedOn(new Date());
+										temp.setSfEntityFlag("SUCCESS");
+										confirmStatusService.update(temp);
+									}
 								}
-								if (!confirmStatus.getSfEntityFlag().equalsIgnoreCase("FAILED")) {
-									temp = confirmStatusService.findById(confirmStatus.getId());
-									temp.setUpdatedOn(new Date());
-									temp.setSfEntityFlag("SUCCESS");
-									confirmStatusService.update(temp);
-								}
-
 							} catch (IOException e) {
 
 								e.printStackTrace();
@@ -2201,174 +2206,9 @@ public class PreHireManagerController {
 
 			map.put("startDate", confirmStatus.getStartDate());
 
-			logger.debug("SF REPOST START");
-			// if SF Entities Failed
-			if (confirmStatus.getSfEntityFlag().equalsIgnoreCase("FAILED")
-					|| confirmStatus.getSfEntityFlag().equalsIgnoreCase("")) {
-
-				try {
-
-					Thread entityThread = new Thread(new Runnable() {
-						@Override
-						public void run() {
-
-							try {
-
-								// updating the startDate and employeeClass to confirm
-								// the hire
-								ConfirmStatus temp = confirmStatusService.findById(confirmStatus.getId());
-								temp.setUpdatedOn(new Date());
-								temp.setSfEntityFlag("BEGIN");
-								confirmStatusService.update(temp);
-								timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-								logger.debug("before SF Updates" + timeStamp);
-
-								for (Map.Entry<String, String> entity : entityMap.entrySet()) {
-
-									if (!(entity.getKey().equalsIgnoreCase("cust_Additional_Information")
-											|| entity.getKey().equalsIgnoreCase("cust_personIdGenerate"))) {
-
-										String getresponseJson = entityResponseMap.get(entity.getKey());
-										if (getresponseJson != null) {
-											JSONObject getresponseJsonObject = new JSONObject(getresponseJson);
-											// logger.debug("getresponseJson"+getresponseJson);
-											if (getresponseJsonObject.getJSONObject("d").getJSONArray("results")
-													.length() != 0) {
-												JSONObject getresultObj = getresponseJsonObject.getJSONObject("d")
-														.getJSONArray("results").getJSONObject(0);
-
-												if (entity.getKey().equalsIgnoreCase("PaymentInformationV3")) {
-													getresultObj.put("effectiveStartDate", map.get("startDate"));
-													JSONObject paymentInfoDetail = getresultObj
-															.getJSONObject("toPaymentInformationDetailV3")
-															.getJSONArray("results").getJSONObject(0);
-													paymentInfoDetail.put("PaymentInformationV3_effectiveStartDate",
-															map.get("startDate"));
-													paymentInfoDetail.put("cust_notes", "Updated by Fast Hire App");
-													;
-													getresultObj.put("toPaymentInformationDetailV3", paymentInfoDetail);
-													getresultObj.put("cust_notes", "Updated by Fast Hire App");
-												} else if (entity.getKey().equalsIgnoreCase("EmpJob")) {
-													getresultObj.put("startDate", map.get("startDate"));
-													if (getresultObj.getString("countryOfCompany") != null) {
-														SFConstants employeeClassConst = sfConstantsService
-																.findById("employeeClassId_"
-																		+ getresultObj.getString("countryOfCompany"));
-														getresultObj.put("employeeClass",
-																employeeClassConst.getValue());
-
-													}
-
-													// remove countryOfCompany due to un
-													// upsertable field
-													getresultObj.remove("countryOfCompany");
-													getresultObj.remove("jobTitle");
-													getresultObj.remove("positionNav");
-													getresultObj.put("notes", "Updated by Fast Hire App");
-												} else if (entity.getKey().equalsIgnoreCase("EmpPayCompRecurring")) {
-													getresultObj.put("startDate", map.get("startDate"));
-													getresultObj.put("notes", "Updated by Fast hire app");
-												} else if (entity.getKey().equalsIgnoreCase("EmpCompensation")) {
-													getresultObj.put("startDate", map.get("startDate"));
-													getresultObj.put("notes", "Updated by Fast hire app");
-												} else if (entity.getKey().equalsIgnoreCase("PerAddressDEFLT")) {
-													getresultObj.put("startDate", map.get("startDate"));
-													getresultObj.put("notes", "Updated by Fast hire app");
-												}
-
-												else if (entity.getKey().equalsIgnoreCase("PerPersonal")) {
-													getresultObj.put("notes", "Updated by Fast Hire App");
-													getresultObj.put("startDate", map.get("startDate"));
-												} else if (entity.getKey().equalsIgnoreCase("EmpEmployment")) {
-													getresultObj.put("notes", "Updated by Fast Hire App");
-													getresultObj.put("startDate", map.get("startDate"));
-												} else if (entity.getKey().equalsIgnoreCase("PerEmail")) {
-													getresultObj.put("customString1", "Updated by Fast Hire App");
-												} else if (entity.getKey().equalsIgnoreCase("PerPerson")) {
-													getresultObj.remove("perPersonUuid");
-													getresultObj.put("customString1", "Updated by Fast Hire App");
-												} else {
-													getresultObj.put("startDate", map.get("startDate"));
-												}
-
-												String postJsonString = getresultObj.toString();
-
-												HttpResponse updateresponse = destClient.callDestinationPOST("/upsert",
-														"?$format=json&purgeType=full", postJsonString);
-												// String entityPostResponseJsonString =
-												// EntityUtils.toString(updateresponse.getEntity(),
-												// "UTF-8");
-												if (updateresponse.getStatusLine().getStatusCode() != 200) {
-													temp = confirmStatusService.findById(confirmStatus.getId());
-													temp.setUpdatedOn(new Date());
-													temp.setSfEntityFlag("FAILED");
-													temp.setEntityName(entity.getKey());
-													confirmStatusService.update(temp);
-												}
-												// logger.debug(entity.getKey() + "
-												// updateresponse" + updateresponse);
-											}
-										}
-									}
-								}
-								if (!confirmStatus.getSfEntityFlag().equalsIgnoreCase("FAILED")) {
-									temp = confirmStatusService.findById(confirmStatus.getId());
-									temp.setUpdatedOn(new Date());
-									temp.setSfEntityFlag("SUCCESS");
-									confirmStatusService.update(temp);
-								}
-								timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-								logger.debug("After SF Updates" + timeStamp);
-							}
-
-							catch (MalformedURLException | URISyntaxException e) {
-								ConfirmStatus temp = confirmStatusService.findById(confirmStatus.getId());
-								temp.setUpdatedOn(new Date());
-								temp.setSfEntityFlag("FAILED");
-								confirmStatusService.update(temp);
-								e.printStackTrace();
-								try {
-									throw e;
-								} catch (Exception e1) {
-									// TODO Auto-generated catch block
-									e1.printStackTrace();
-								}
-
-							} catch (Exception e) {
-								ConfirmStatus temp = confirmStatusService.findById(confirmStatus.getId());
-								temp.setUpdatedOn(new Date());
-								temp.setSfEntityFlag("FAILED");
-								confirmStatusService.update(temp);
-								try {
-									throw e;
-								} catch (Exception e1) {
-									// TODO Auto-generated catch block
-									e1.printStackTrace();
-								}
-
-							}
-						}
-					});
-
-					entityThread.start();
-				} catch (Exception e) {
-					ConfirmStatus temp = confirmStatusService.findById(confirmStatus.getId());
-					temp.setUpdatedOn(new Date());
-					temp.setSfEntityFlag("FAILED");
-					confirmStatusService.update(temp);
-					try {
-						throw e;
-					} catch (Exception e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				}
-			}
-			logger.debug("PEX REPOST START");
 			if (confirmStatus.getPexUpdateFlag().equalsIgnoreCase("FAILED")
 					|| confirmStatus.getPexUpdateFlag().equalsIgnoreCase("")) {
-
-				logger.debug("PEX REPOST START INSIDE");
+				logger.debug("PEX REPOST START");
 				ConfirmStatus temp = confirmStatusService.findById(confirmStatus.getId());
 				temp.setUpdatedOn(new Date());
 				temp.setPexUpdateFlag("BEGIN");
@@ -2601,6 +2441,174 @@ public class PreHireManagerController {
 					return new ResponseEntity<>("Error: " + e.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 
+			}
+
+			ConfirmStatus temp = confirmStatusService.findById(confirmStatus.getId());
+			if (temp.getPexUpdateFlag().equalsIgnoreCase("SUCCESS")) {// Perform SF posting only if PEX is in SUCCESS
+				// if SF Entities Failed
+				if (confirmStatus.getSfEntityFlag().equalsIgnoreCase("FAILED")
+						|| confirmStatus.getSfEntityFlag().equalsIgnoreCase("")) {
+
+					try {
+						logger.debug("SF REPOST START");
+						Thread entityThread = new Thread(new Runnable() {
+							@Override
+							public void run() {
+
+								try {
+
+									// updating the startDate and employeeClass to confirm
+									// the hire
+									ConfirmStatus temp = confirmStatusService.findById(confirmStatus.getId());
+									temp.setUpdatedOn(new Date());
+									temp.setSfEntityFlag("BEGIN");
+									confirmStatusService.update(temp);
+									timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+									logger.debug("before SF Updates" + timeStamp);
+
+									for (Map.Entry<String, String> entity : entityMap.entrySet()) {
+
+										if (!(entity.getKey().equalsIgnoreCase("cust_Additional_Information")
+												|| entity.getKey().equalsIgnoreCase("cust_personIdGenerate"))) {
+
+											String getresponseJson = entityResponseMap.get(entity.getKey());
+											if (getresponseJson != null) {
+												JSONObject getresponseJsonObject = new JSONObject(getresponseJson);
+												// logger.debug("getresponseJson"+getresponseJson);
+												if (getresponseJsonObject.getJSONObject("d").getJSONArray("results")
+														.length() != 0) {
+													JSONObject getresultObj = getresponseJsonObject.getJSONObject("d")
+															.getJSONArray("results").getJSONObject(0);
+
+													if (entity.getKey().equalsIgnoreCase("PaymentInformationV3")) {
+														getresultObj.put("effectiveStartDate", map.get("startDate"));
+														JSONObject paymentInfoDetail = getresultObj
+																.getJSONObject("toPaymentInformationDetailV3")
+																.getJSONArray("results").getJSONObject(0);
+														paymentInfoDetail.put("PaymentInformationV3_effectiveStartDate",
+																map.get("startDate"));
+														paymentInfoDetail.put("cust_notes", "Updated by Fast Hire App");
+														;
+														getresultObj.put("toPaymentInformationDetailV3",
+																paymentInfoDetail);
+														getresultObj.put("cust_notes", "Updated by Fast Hire App");
+													} else if (entity.getKey().equalsIgnoreCase("EmpJob")) {
+														getresultObj.put("startDate", map.get("startDate"));
+														if (getresultObj.getString("countryOfCompany") != null) {
+															SFConstants employeeClassConst = sfConstantsService
+																	.findById("employeeClassId_" + getresultObj
+																			.getString("countryOfCompany"));
+															getresultObj.put("employeeClass",
+																	employeeClassConst.getValue());
+
+														}
+
+														// remove countryOfCompany due to un
+														// upsertable field
+														getresultObj.remove("countryOfCompany");
+														getresultObj.remove("jobTitle");
+														getresultObj.remove("positionNav");
+														getresultObj.put("notes", "Updated by Fast Hire App");
+													} else if (entity.getKey()
+															.equalsIgnoreCase("EmpPayCompRecurring")) {
+														getresultObj.put("startDate", map.get("startDate"));
+														getresultObj.put("notes", "Updated by Fast hire app");
+													} else if (entity.getKey().equalsIgnoreCase("EmpCompensation")) {
+														getresultObj.put("startDate", map.get("startDate"));
+														getresultObj.put("notes", "Updated by Fast hire app");
+													} else if (entity.getKey().equalsIgnoreCase("PerAddressDEFLT")) {
+														getresultObj.put("startDate", map.get("startDate"));
+														getresultObj.put("notes", "Updated by Fast hire app");
+													}
+
+													else if (entity.getKey().equalsIgnoreCase("PerPersonal")) {
+														getresultObj.put("notes", "Updated by Fast Hire App");
+														getresultObj.put("startDate", map.get("startDate"));
+													} else if (entity.getKey().equalsIgnoreCase("EmpEmployment")) {
+														getresultObj.put("notes", "Updated by Fast Hire App");
+														getresultObj.put("startDate", map.get("startDate"));
+													} else if (entity.getKey().equalsIgnoreCase("PerEmail")) {
+														getresultObj.put("customString1", "Updated by Fast Hire App");
+													} else if (entity.getKey().equalsIgnoreCase("PerPerson")) {
+														getresultObj.remove("perPersonUuid");
+														getresultObj.put("customString1", "Updated by Fast Hire App");
+													} else {
+														getresultObj.put("startDate", map.get("startDate"));
+													}
+
+													String postJsonString = getresultObj.toString();
+
+													HttpResponse updateresponse = destClient.callDestinationPOST(
+															"/upsert", "?$format=json&purgeType=full", postJsonString);
+													// String entityPostResponseJsonString =
+													// EntityUtils.toString(updateresponse.getEntity(),
+													// "UTF-8");
+													if (updateresponse.getStatusLine().getStatusCode() != 200) {
+														temp = confirmStatusService.findById(confirmStatus.getId());
+														temp.setUpdatedOn(new Date());
+														temp.setSfEntityFlag("FAILED");
+														temp.setEntityName(entity.getKey());
+														confirmStatusService.update(temp);
+													}
+													// logger.debug(entity.getKey() + "
+													// updateresponse" + updateresponse);
+												}
+											}
+										}
+									}
+									if (!confirmStatus.getSfEntityFlag().equalsIgnoreCase("FAILED")) {
+										temp = confirmStatusService.findById(confirmStatus.getId());
+										temp.setUpdatedOn(new Date());
+										temp.setSfEntityFlag("SUCCESS");
+										confirmStatusService.update(temp);
+									}
+									timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+									logger.debug("After SF Updates" + timeStamp);
+								}
+
+								catch (MalformedURLException | URISyntaxException e) {
+									ConfirmStatus temp = confirmStatusService.findById(confirmStatus.getId());
+									temp.setUpdatedOn(new Date());
+									temp.setSfEntityFlag("FAILED");
+									confirmStatusService.update(temp);
+									e.printStackTrace();
+									try {
+										throw e;
+									} catch (Exception e1) {
+										// TODO Auto-generated catch block
+										e1.printStackTrace();
+									}
+
+								} catch (Exception e) {
+									ConfirmStatus temp = confirmStatusService.findById(confirmStatus.getId());
+									temp.setUpdatedOn(new Date());
+									temp.setSfEntityFlag("FAILED");
+									confirmStatusService.update(temp);
+									try {
+										throw e;
+									} catch (Exception e1) {
+										// TODO Auto-generated catch block
+										e1.printStackTrace();
+									}
+
+								}
+							}
+						});
+
+						entityThread.start();
+					} catch (Exception e) {
+						ConfirmStatus temp2 = confirmStatusService.findById(confirmStatus.getId());
+						temp2.setUpdatedOn(new Date());
+						temp2.setSfEntityFlag("FAILED");
+						confirmStatusService.update(temp2);
+						try {
+							throw e;
+						} catch (Exception e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+					}
+				}
 			}
 			return ResponseEntity.ok().body("SUCCESS");
 		} catch (Exception e) {
