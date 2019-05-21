@@ -107,6 +107,7 @@ public class PreHireManagerController {
 	public static final String pocDocDestinationName = "DocGeneration";
 	private Context ctx;
 	private ConnectivityConfiguration configuration;
+	private Boolean realTimePEXUpdateSuccess;
 
 	private enum hunLocale {
 		január, február, március, április, május, junius, julius, augusztus, szeptember, október, november, december
@@ -1563,7 +1564,8 @@ public class PreHireManagerController {
 						public void run() {
 
 							try {
-
+								realTimePEXUpdateSuccess = new Boolean(false); // creating new instance of PEXUPdtae
+																				// variable
 								timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
 								logger.debug("After SF Updates" + timeStamp);
 								ConfirmStatus temp = confirmStatusService.findById(confirmStatus.getId());
@@ -1744,6 +1746,7 @@ public class PreHireManagerController {
 																		temp.setUpdatedOn(new Date());
 																		temp.setPexUpdateFlag("SUCCESS");
 																		confirmStatusService.update(temp);
+																		realTimePEXUpdateSuccess = true;
 																	}
 																}
 															} else {
@@ -1824,10 +1827,11 @@ public class PreHireManagerController {
 								// hire
 								logger.debug("confirmStatus.getId():" + confirmStatus.getId());
 								temp = confirmStatusService.findById(confirmStatus.getId());
-								logger.debug("ctemp:" + temp);
-
-								if (temp.getPexUpdateFlag().equalsIgnoreCase("SUCCESS")) {// Perform SF posting only if
-																							// PEX is SUCCESS
+								logger.debug("PEX flag in normal posting:" + temp.getPexUpdateFlag()
+										+ " ::: Equals SUCCESS: " + temp.getPexUpdateFlag().equalsIgnoreCase("SUCCESS")
+										+ "realTimePEXUpdateSuccess: " + realTimePEXUpdateSuccess);
+								if (realTimePEXUpdateSuccess) {// Perform SF posting only if
+																// PEX is SUCCESS
 									temp.setUpdatedOn(new Date());
 									/* SF Started */
 									temp.setSfEntityFlag("BEGIN");
@@ -2205,7 +2209,8 @@ public class PreHireManagerController {
 			logger.debug("confirm Status REPOST" + confirmStatus.getId());
 
 			map.put("startDate", confirmStatus.getStartDate());
-
+			realTimePEXUpdateSuccess = new Boolean(false);
+			realTimePEXUpdateSuccess = confirmStatus.getPexUpdateFlag().equalsIgnoreCase("SUCCESS") ? true : false;
 			if (confirmStatus.getPexUpdateFlag().equalsIgnoreCase("FAILED")
 					|| confirmStatus.getPexUpdateFlag().equalsIgnoreCase("")) {
 				logger.debug("PEX REPOST START");
@@ -2370,6 +2375,7 @@ public class PreHireManagerController {
 														temp.setUpdatedOn(new Date());
 														temp.setPexUpdateFlag("SUCCESS");
 														confirmStatusService.update(temp);
+														realTimePEXUpdateSuccess = true;
 													}
 												}
 											} else {
@@ -2443,11 +2449,20 @@ public class PreHireManagerController {
 
 			}
 
-			ConfirmStatus temp = confirmStatusService.findById(confirmStatus.getId());
-			if (temp.getPexUpdateFlag().equalsIgnoreCase("SUCCESS")) {// Perform SF posting only if PEX is in SUCCESS
+			ConfirmStatus temp = confirmStatusService.findById(pPuid);
+
+			logger.debug("PUUID:" + pPuid + "  ::: PEX flag in Repost Before SF POST: " + temp.getPexUpdateFlag()
+					+ " ::: Equals SUCCESS: " + temp.getPexUpdateFlag().equalsIgnoreCase("SUCCESS")
+					+ "realTimePEXUpdateSuccess: " + realTimePEXUpdateSuccess);
+			logger.debug("confirmStatus.getSfEntityFlag(): " + confirmStatus.getSfEntityFlag());
+			if (realTimePEXUpdateSuccess) {// Perform SF posting
+											// only if
+				// PEX is in
+				// SUCCESS
 				// if SF Entities Failed
 				if (confirmStatus.getSfEntityFlag().equalsIgnoreCase("FAILED")
-						|| confirmStatus.getSfEntityFlag().equalsIgnoreCase("")) {
+						|| confirmStatus.getSfEntityFlag().equalsIgnoreCase("")
+						|| confirmStatus.getSfEntityFlag() == null) {
 
 					try {
 						logger.debug("SF REPOST START");
