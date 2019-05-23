@@ -65,19 +65,22 @@ public class CustPersonIdGen {
 
 	@PostMapping(value = ConstantManager.custPerIDGen, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public String postCustPersonCustomField(@RequestBody String request, HttpServletRequest requestForSession) {
+		try {
+			parseRequest(request);
 
-		parseRequest(request);
-
-		URLManager genURL = new URLManager(getClass().getSimpleName() + "Post", configName);
-		String urlToCall = genURL.formURLToCall();
-		HttpSession session = requestForSession.getSession(false);
-		userID = (String) session.getAttribute("userID");
-		logger.error("Got UserId from session in CustPersonIdGen: " + userID);
-		URI uri = CommonFunctions.convertToURI(urlToCall);
-		HttpConnectionPOST httpConnectionPOST = new HttpConnectionPOST(uri, URLManager.dConfiguration,
-				postBodyCreation(userID), CustPersonIdGen.class);
-		String result = httpConnectionPOST.connectToServer();
-		return result;
+			URLManager genURL = new URLManager(getClass().getSimpleName() + "Post", configName);
+			String urlToCall = genURL.formURLToCall();
+			HttpSession session = requestForSession.getSession(false);
+			userID = (String) session.getAttribute("userID");
+			logger.error("Got UserId from session in CustPersonIdGen: " + userID);
+			URI uri = CommonFunctions.convertToURI(urlToCall);
+			HttpConnectionPOST httpConnectionPOST = new HttpConnectionPOST(uri, URLManager.dConfiguration,
+					postBodyCreation(userID), CustPersonIdGen.class);
+			String result = httpConnectionPOST.connectToServer();
+			return result;
+		} catch (Exception e) {
+			return (e.getMessage());
+		}
 	}
 
 	private void parseRequest(String request) {

@@ -29,26 +29,30 @@ public class PositionVacancy {
 
 	@GetMapping(value = ConstantManager.posVacancy, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public String perPerson(HttpServletRequest request) {
+		try {
+			URLManager genURL = new URLManager(getClass().getSimpleName(), configName);
+			String urlToCall = genURL.formURLToCall();
+			logger.info(
+					ConstantManager.lineSeparator + ConstantManager.urlLog + urlToCall + ConstantManager.lineSeparator);
 
-		URLManager genURL = new URLManager(getClass().getSimpleName(), configName);
-		String urlToCall = genURL.formURLToCall();
-		logger.info(ConstantManager.lineSeparator + ConstantManager.urlLog + urlToCall + ConstantManager.lineSeparator);
+			// Get details from server
+			URI uri = CommonFunctions.convertToURI(urlToCall);
+			HttpSession session = request.getSession(false);
+			String userID = (String) session.getAttribute("userID");
+			logger.error("Got UserId from session in PositionVacacy: " + userID);
+			String metaDataUpdatePosVac = (String) session.getAttribute("metaDataUpdatePosVac");
+			logger.error("Got UserId from session in PositionVacacy: " + metaDataUpdatePosVac);
 
-		// Get details from server
-		URI uri = CommonFunctions.convertToURI(urlToCall);
-		HttpSession session = request.getSession(false);
-		String userID = (String) session.getAttribute("userID");
-		logger.error("Got UserId from session in PositionVacacy: " + userID);
-		String metaDataUpdatePosVac = (String) session.getAttribute("metaDataUpdatePosVac");
-		logger.error("Got UserId from session in PositionVacacy: " + metaDataUpdatePosVac);
+			HttpConnectionPOST httpConnectionPOST = new HttpConnectionPOST(uri, URLManager.dConfiguration,
+					replaceKeys(metaDataUpdatePosVac), PositionVacancy.class);
 
-		HttpConnectionPOST httpConnectionPOST = new HttpConnectionPOST(uri, URLManager.dConfiguration,
-				replaceKeys(metaDataUpdatePosVac), PositionVacancy.class);
-
-		String result = httpConnectionPOST.connectToServer();
-		String code = checkResp(result);
-		String resp = sendResp(code, userID);
-		return resp;
+			String result = httpConnectionPOST.connectToServer();
+			String code = checkResp(result);
+			String resp = sendResp(code, userID);
+			return resp;
+		} catch (Exception e) {
+			return (e.getMessage());
+		}
 	}
 
 	@SuppressWarnings("unchecked")

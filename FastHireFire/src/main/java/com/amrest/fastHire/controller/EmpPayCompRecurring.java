@@ -50,27 +50,31 @@ public class EmpPayCompRecurring {
 
 	@PostMapping(value = ConstantManager.empPayCompRecurring, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public String perPerson(@RequestBody String request, HttpServletRequest requestForSession) {
+		try {
+			// Extract the params and their values
+			parseRequest(request);
 
-		// Extract the params and their values
-		parseRequest(request);
+			URLManager genURL = new URLManager(getClass().getSimpleName(), configName);
+			String urlToCall = genURL.formURLToCall();
+			logger.info(
+					ConstantManager.lineSeparator + ConstantManager.urlLog + urlToCall + ConstantManager.lineSeparator);
 
-		URLManager genURL = new URLManager(getClass().getSimpleName(), configName);
-		String urlToCall = genURL.formURLToCall();
-		logger.info(ConstantManager.lineSeparator + ConstantManager.urlLog + urlToCall + ConstantManager.lineSeparator);
-
-		// Get details from server
-		URI uri = CommonFunctions.convertToURI(urlToCall);
-		HttpSession session = requestForSession.getSession(false);
-		String userID = (String) session.getAttribute("userID");
-		logger.error("Got UserId from session in EmpPayCompRecurring: " + userID);
-		String paramStartDateName = (String) session.getAttribute("paramStartDateName");
-		logger.error("Got paramStartDateName from session in EmpPayCompRecurring: " + userID);
-		String paramStartDateValue = (String) session.getAttribute("paramStartDateValue");
-		logger.error("Got paramStartDateValue from session in EmpPayCompRecurring: " + paramStartDateValue);
-		HttpConnectionPOST httpConnectionPOST = new HttpConnectionPOST(uri, URLManager.dConfiguration,
-				replaceKeys(userID, paramStartDateName, paramStartDateValue), EmpPayCompRecurring.class);
-		String result = httpConnectionPOST.connectToServer();
-		return result;
+			// Get details from server
+			URI uri = CommonFunctions.convertToURI(urlToCall);
+			HttpSession session = requestForSession.getSession(false);
+			String userID = (String) session.getAttribute("userID");
+			logger.error("Got UserId from session in EmpPayCompRecurring: " + userID);
+			String paramStartDateName = (String) session.getAttribute("paramStartDateName");
+			logger.error("Got paramStartDateName from session in EmpPayCompRecurring: " + userID);
+			String paramStartDateValue = (String) session.getAttribute("paramStartDateValue");
+			logger.error("Got paramStartDateValue from session in EmpPayCompRecurring: " + paramStartDateValue);
+			HttpConnectionPOST httpConnectionPOST = new HttpConnectionPOST(uri, URLManager.dConfiguration,
+					replaceKeys(userID, paramStartDateName, paramStartDateValue), EmpPayCompRecurring.class);
+			String result = httpConnectionPOST.connectToServer();
+			return result;
+		} catch (Exception e) {
+			return (e.getMessage());
+		}
 	}
 
 	// Parse the request

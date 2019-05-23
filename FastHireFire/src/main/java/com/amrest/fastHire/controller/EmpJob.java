@@ -103,38 +103,43 @@ public class EmpJob {
 	@PostMapping(value = ConstantManager.empJob, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public String perPerson(@RequestBody String request, HttpServletRequest requestForSession)
 			throws ParseException, NamingException, ClientProtocolException, IOException, URISyntaxException {
+		try {
+			logger.error("EmpbjobBodyGet:" + request);
+			HttpSession session = requestForSession.getSession(false);
 
-		logger.error("EmpbjobBodyGet:" + request);
-		HttpSession session = requestForSession.getSession(false);
+			// Extract the params and their values
+			parseRequest(request, session);
 
-		// Extract the params and their values
-		parseRequest(request, session);
+			// getting params for the json Body
+			callAPI(paramPositionValue, session);
+			getManagerFromEmpJob();
 
-		// getting params for the json Body
-		callAPI(paramPositionValue, session);
-		getManagerFromEmpJob();
+			URLManager genURL = new URLManager(getClass().getSimpleName(), configName);
+			String urlToCall = genURL.formURLToCall();
+			logger.info(
+					ConstantManager.lineSeparator + ConstantManager.urlLog + urlToCall + ConstantManager.lineSeparator);
 
-		URLManager genURL = new URLManager(getClass().getSimpleName(), configName);
-		String urlToCall = genURL.formURLToCall();
-		logger.info(ConstantManager.lineSeparator + ConstantManager.urlLog + urlToCall + ConstantManager.lineSeparator);
+			// Get details from server
+			URI uri = CommonFunctions.convertToURI(urlToCall);
+			String userID = (String) session.getAttribute("userID");
+			logger.error("Got UserId from session in EmpJob: " + userID);
+			String customDateValue = (String) session.getAttribute("customDateValue");
+			logger.error("Got customDateValue from session in EmpJob: " + customDateValue);
+			String paramStartDateValue = (String) session.getAttribute("paramStartDateValue");
+			logger.error("Got paramStartDateValue from session in EmpJob: " + paramStartDateValue);
+			HttpConnectionPOST httpConnectionPOST = new HttpConnectionPOST(uri, URLManager.dConfiguration,
+					replaceKeys(userID, customDateValue, paramStartDateValue), EmpJob.class);
 
-		// Get details from server
-		URI uri = CommonFunctions.convertToURI(urlToCall);
-		String userID = (String) session.getAttribute("userID");
-		logger.error("Got UserId from session in EmpJob: " + userID);
-		String customDateValue = (String) session.getAttribute("customDateValue");
-		logger.error("Got customDateValue from session in EmpJob: " + customDateValue);
-		String paramStartDateValue = (String) session.getAttribute("paramStartDateValue");
-		logger.error("Got paramStartDateValue from session in EmpJob: " + paramStartDateValue);
-		HttpConnectionPOST httpConnectionPOST = new HttpConnectionPOST(uri, URLManager.dConfiguration,
-				replaceKeys(userID, customDateValue, paramStartDateValue), EmpJob.class);
-
-		String result = httpConnectionPOST.connectToServer();
-		return result;
+			String result = httpConnectionPOST.connectToServer();
+			return result;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return e.getMessage();
+		}
 	}
 
-	private void getManagerFromEmpJob()
-			throws NamingException, ClientProtocolException, IOException, URISyntaxException {
+	@SuppressWarnings("unchecked")
+	private void getManagerFromEmpJob() throws Exception {
 		DestinationClient destClient = new DestinationClient();
 		destClient.setDestName(destinationName);
 		destClient.setHeaderProvider();
@@ -147,9 +152,20 @@ public class EmpJob {
 		JSONObject jsonObject = (JSONObject) JSONValue.parse(responseString);
 		jsonObject = (JSONObject) jsonObject.get("d");
 		JSONArray jsonArray = (JSONArray) jsonObject.get("results");
-		jsonObject = (JSONObject) jsonArray.get(0);
-		managerId = jsonObject.get("userId").toString();
-
+		if (jsonArray.size() == 0) {
+			JSONObject errorOBj = new JSONObject();
+			JSONObject tempObj = new JSONObject();
+			tempObj.put("status", "ERROR");
+			tempObj.put("message", "Error! No manager for Parent Position!");
+			tempObj.put("httpCode", 500);
+			JSONArray tempArr = new JSONArray();
+			tempArr.add(tempObj);
+			errorOBj.put("d", tempArr);
+			throw new Exception(errorOBj.toString());
+		} else {
+			jsonObject = (JSONObject) jsonArray.get(0);
+			managerId = jsonObject.get("userId").toString();
+		}
 	}
 
 	// Call another api

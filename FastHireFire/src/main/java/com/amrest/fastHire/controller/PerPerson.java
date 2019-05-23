@@ -43,23 +43,28 @@ public class PerPerson {
 	@PostMapping(value = ConstantManager.perPerson, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public String perPerson(@RequestBody String request, HttpServletRequest requestForSession) {
 
-		// Extract the params and their values
-		parseRequest(request);
+		try {
+			// Extract the params and their values
+			parseRequest(request);
 
-		URLManager genURL = new URLManager(getClass().getSimpleName(), configName);
-		String urlToCall = genURL.formURLToCall();
-		logger.info(ConstantManager.lineSeparator + ConstantManager.urlLog + urlToCall + ConstantManager.lineSeparator);
+			URLManager genURL = new URLManager(getClass().getSimpleName(), configName);
+			String urlToCall = genURL.formURLToCall();
+			logger.info(
+					ConstantManager.lineSeparator + ConstantManager.urlLog + urlToCall + ConstantManager.lineSeparator);
 
-		// Get details from server
-		URI uri = CommonFunctions.convertToURI(urlToCall);
-		HttpSession session = requestForSession.getSession(false);
-		String userID = (String) session.getAttribute("userID");
-		logger.error("Got UserId from session in PerPerson: " + userID);
-		HttpConnectionPOST httpConnectionPOST = new HttpConnectionPOST(uri, URLManager.dConfiguration,
-				replaceKeys(userID), PerPerson.class);
+			// Get details from server
+			URI uri = CommonFunctions.convertToURI(urlToCall);
+			HttpSession session = requestForSession.getSession(false);
+			String userID = (String) session.getAttribute("userID");
+			logger.error("Got UserId from session in PerPerson: " + userID);
+			HttpConnectionPOST httpConnectionPOST = new HttpConnectionPOST(uri, URLManager.dConfiguration,
+					replaceKeys(userID), PerPerson.class);
 
-		String result = httpConnectionPOST.connectToServer();
-		return result;
+			String result = httpConnectionPOST.connectToServer();
+			return result;
+		} catch (Exception e) {
+			return (e.getMessage());
+		}
 	}
 
 	// Parse the request

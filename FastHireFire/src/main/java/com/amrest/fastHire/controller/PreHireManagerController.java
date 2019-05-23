@@ -234,22 +234,26 @@ public class PreHireManagerController {
 		SFConstants vacantEmployeeClass = sfConstantsService.findById("vacantEmployeeClass_" + paraMap.get("country"));
 
 		String vacantPositionFilter = "?$filter=" + "vacant eq true and company eq '" + paraMap.get("company") + "' "
-				+ "and department eq '" + paraMap.get("department") + "' " + "and parentPosition/code eq '"
-				+ paraMap.get("position") + "' " + "&$format=json" + "&$expand=employeeClassNav" + "&$select="
-				+ "externalName_localized," + "externalName_defaultValue," + "payGrade,jobTitle,code,"
-				+ "employeeClassNav/label_defaultValue," + "employeeClassNav/label_localized";
+				+ "and department eq '" + paraMap.get("department") + "' and " + "(parentPosition/code eq '"
+				+ paraMap.get("position") + "' or parentPosition/parentPosition/code eq '" + paraMap.get("position")
+				+ "')" + "&$format=json" + "&$expand=employeeClassNav" + "&$select=" + "externalName_localized,"
+				+ "externalName_defaultValue," + "payGrade,jobTitle,code," + "employeeClassNav/label_defaultValue,"
+				+ "employeeClassNav/label_localized";
 
 		if (vacantEmployeeClass != null) {
 			vacantPositionFilter = "?$filter=" + "vacant eq true and company eq '" + paraMap.get("company") + "' "
 					+ "and department eq '" + paraMap.get("department") + "' " + "and employeeClass eq '"
-					+ vacantEmployeeClass.getValue() + "' " + "and parentPosition/code eq '" + paraMap.get("position")
-					+ "' " + "&$format=json" + "&$expand=employeeClassNav" + "&$select=" + "externalName_localized,"
+					+ vacantEmployeeClass.getValue() + "' and " + "(parentPosition/code eq '" + paraMap.get("position")
+					+ "' or parentPosition/parentPosition/code eq '" + paraMap.get("position") + "')" + "&$format=json"
+					+ "&$expand=employeeClassNav" + "&$select=" + "externalName_localized,"
 					+ "externalName_defaultValue," + "payGrade,jobTitle,code," + "employeeClassNav/label_defaultValue,"
 					+ "employeeClassNav/label_localized";
 
 		}
 		// get Vacant Positions
+
 		HttpResponse vacantPosResponse = destClient.callDestinationGET("/Position", vacantPositionFilter);
+
 		String vacantPosResponseJsonString = EntityUtils.toString(vacantPosResponse.getEntity(), "UTF-8");
 		JSONObject vacantPosResponseObject = new JSONObject(vacantPosResponseJsonString);
 		JSONArray vacantPosResultArray = vacantPosResponseObject.getJSONObject("d").getJSONArray("results");
@@ -1718,81 +1722,74 @@ public class PreHireManagerController {
 											}
 											logger.debug("pexFormPostString : " + pexFormPostString);
 											final String finalPexFormPostString = pexFormPostString;
-											Thread pexThread = new Thread(new Runnable() {
-												@Override
-												public void run() {
 
-													try {
-														timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss")
-																.format(new Date());
-														logger.debug("Before PEX Updates" + timeStamp);
+											try {
+												timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss")
+														.format(new Date());
+												logger.debug("Before PEX Updates" + timeStamp);
 
-														HttpResponse pexPostResponse = pexClient.callDestinationPOST(
-																"api/v3/forms/submit", "", finalPexFormPostString);
-														String pexPostResponseJsonString = EntityUtils
-																.toString(pexPostResponse.getEntity(), "UTF-8");
-														try {
+												HttpResponse pexPostResponse = pexClient.callDestinationPOST(
+														"api/v3/forms/submit", "", finalPexFormPostString);
+												String pexPostResponseJsonString = EntityUtils
+														.toString(pexPostResponse.getEntity(), "UTF-8");
+												try {
 
-															if (pexPostResponse.getStatusLine()
-																	.getStatusCode() == 200) {
-																JSONObject pexResponseObject = new JSONObject(
-																		pexPostResponseJsonString);
-																counter = counter + 1;
-																if (counter == pexFormMap.keySet().size()) {
-																	if (!confirmStatus.getSfEntityFlag()
-																			.equalsIgnoreCase("FAILED")) {
-																		ConfirmStatus temp = confirmStatusService
-																				.findById(confirmStatus.getId());
-																		temp.setUpdatedOn(new Date());
-																		temp.setPexUpdateFlag("SUCCESS");
-																		confirmStatusService.update(temp);
-																		realTimePEXUpdateSuccess = true;
-																	}
-																}
-															} else {
-																ConfirmStatus temp = confirmStatusService
+													if (pexPostResponse.getStatusLine().getStatusCode() == 200) {
+														JSONObject pexResponseObject = new JSONObject(
+																pexPostResponseJsonString);
+														counter = counter + 1;
+														if (counter == pexFormMap.keySet().size()) {
+															if (!confirmStatus.getSfEntityFlag()
+																	.equalsIgnoreCase("FAILED")) {
+																realTimePEXUpdateSuccess = true;
+																ConfirmStatus temp2 = confirmStatusService
 																		.findById(confirmStatus.getId());
-																temp.setUpdatedOn(new Date());
-																temp.setPexUpdateFlag("FAILED");
-																confirmStatusService.update(temp);
-
-															}
-
-														} catch (JSONException ex) {
-															ConfirmStatus temp = confirmStatusService
-																	.findById(confirmStatus.getId());
-															temp.setUpdatedOn(new Date());
-															temp.setPexUpdateFlag("FAILED");
-															confirmStatusService.update(temp);
-															try {
-																throw ex;
-															} catch (JSONException e1) {
-																// TODO Auto-generated catch block
-																e1.printStackTrace();
+																temp2.setUpdatedOn(new Date());
+																temp2.setPexUpdateFlag("SUCCESS");
+																confirmStatusService.update(temp2);
+																realTimePEXUpdateSuccess = true;
 															}
 														}
-														logger.error("pexPostResponseJsonString : "
-																+ pexPostResponseJsonString);
-
-													} catch (URISyntaxException | IOException e) {
-														// TODO Auto-generated catch block
-														ConfirmStatus temp = confirmStatusService
+													} else {
+														ConfirmStatus temp2 = confirmStatusService
 																.findById(confirmStatus.getId());
-														temp.setUpdatedOn(new Date());
-														temp.setPexUpdateFlag("FAILED");
-														confirmStatusService.update(temp);
-														e.printStackTrace();
-														try {
-															throw e;
-														} catch (URISyntaxException | IOException e1) {
-															// TODO Auto-generated catch block
-															e1.printStackTrace();
-														}
+														temp2.setUpdatedOn(new Date());
+														temp2.setPexUpdateFlag("FAILED");
+														confirmStatusService.update(temp2);
+
+													}
+
+												} catch (JSONException ex) {
+													ConfirmStatus temp2 = confirmStatusService
+															.findById(confirmStatus.getId());
+													temp2.setUpdatedOn(new Date());
+													temp2.setPexUpdateFlag("FAILED");
+													confirmStatusService.update(temp2);
+													try {
+														throw ex;
+													} catch (JSONException e1) {
+														// TODO Auto-generated catch block
+														e1.printStackTrace();
 													}
 												}
-											});
+												logger.error(
+														"pexPostResponseJsonString : " + pexPostResponseJsonString);
 
-											pexThread.start();
+											} catch (URISyntaxException | IOException e) {
+												// TODO Auto-generated catch block
+												ConfirmStatus temp2 = confirmStatusService
+														.findById(confirmStatus.getId());
+												temp2.setUpdatedOn(new Date());
+												temp2.setPexUpdateFlag("FAILED");
+												confirmStatusService.update(temp2);
+												e.printStackTrace();
+												try {
+													throw e;
+												} catch (URISyntaxException | IOException e1) {
+													// TODO Auto-generated catch block
+													e1.printStackTrace();
+												}
+											}
 
 										}
 
@@ -2347,92 +2344,81 @@ public class PreHireManagerController {
 							}
 							logger.debug("pexFormPostString : " + pexFormPostString);
 							final String finalPexFormPostString = pexFormPostString;
-							Thread pexThread = new Thread(new Runnable() {
 
-								@Override
-								public void run() {
+							try {
+								timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+								logger.debug("Before PEX Updates" + timeStamp);
 
-									try {
-										timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-										logger.debug("Before PEX Updates" + timeStamp);
+								HttpResponse pexPostResponse = pexClient.callDestinationPOST("api/v3/forms/submit", "",
+										finalPexFormPostString);
+								String pexPostResponseJsonString = EntityUtils.toString(pexPostResponse.getEntity(),
+										"UTF-8");
+								logger.debug("Before Try pexPostResponseJsonString : " + pexPostResponseJsonString);
+								try {
 
-										HttpResponse pexPostResponse = pexClient
-												.callDestinationPOST("api/v3/forms/submit", "", finalPexFormPostString);
-										String pexPostResponseJsonString = EntityUtils
-												.toString(pexPostResponse.getEntity(), "UTF-8");
-										logger.debug(
-												"Before Try pexPostResponseJsonString : " + pexPostResponseJsonString);
-										try {
-
-											if (pexPostResponse.getStatusLine().getStatusCode() == 200) {
-												JSONObject pexResponseObject = new JSONObject(
-														pexPostResponseJsonString);
-												counter = counter + 1;
-												if (counter == pexFormMap.keySet().size()) {
-													if (!confirmStatus.getSfEntityFlag().equalsIgnoreCase("FAILED")) {
-														ConfirmStatus temp = confirmStatusService
-																.findById(confirmStatus.getId());
-														temp.setUpdatedOn(new Date());
-														temp.setPexUpdateFlag("SUCCESS");
-														confirmStatusService.update(temp);
-														realTimePEXUpdateSuccess = true;
-													}
-												}
-											} else {
-												ConfirmStatus temp = confirmStatusService
+									if (pexPostResponse.getStatusLine().getStatusCode() == 200) {
+										JSONObject pexResponseObject = new JSONObject(pexPostResponseJsonString);
+										counter = counter + 1;
+										if (counter == pexFormMap.keySet().size()) {
+											if (!confirmStatus.getSfEntityFlag().equalsIgnoreCase("FAILED")) {
+												ConfirmStatus temp2 = confirmStatusService
 														.findById(confirmStatus.getId());
-												temp.setUpdatedOn(new Date());
-												temp.setPexUpdateFlag("FAILED");
-												confirmStatusService.update(temp);
-
+												temp2.setUpdatedOn(new Date());
+												temp2.setPexUpdateFlag("SUCCESS");
+												confirmStatusService.update(temp2);
+												realTimePEXUpdateSuccess = true;
 											}
-										} catch (JSONException ex) {
-											ConfirmStatus temp = confirmStatusService.findById(confirmStatus.getId());
-											temp.setUpdatedOn(new Date());
-											temp.setPexUpdateFlag("FAILED");
-											confirmStatusService.update(temp);
-											logger.debug("FAILED PEX REPOST" + ex.getMessage());
-											try {
-												throw ex;
-											} catch (JSONException e1) {
-												// TODO Auto-generated catch block
-												e1.printStackTrace();
-											}
+										}
+									} else {
+										ConfirmStatus temp2 = confirmStatusService.findById(confirmStatus.getId());
+										temp2.setUpdatedOn(new Date());
+										temp2.setPexUpdateFlag("FAILED");
+										confirmStatusService.update(temp2);
 
-										}
-										logger.debug("pexPostResponseJsonString : " + pexPostResponseJsonString);
-
-									} catch (URISyntaxException | IOException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
-										ConfirmStatus temp = confirmStatusService.findById(confirmStatus.getId());
-										temp.setUpdatedOn(new Date());
-										temp.setPexUpdateFlag("FAILED");
-										confirmStatusService.update(temp);
-										logger.debug("FAILED PEX REPOST" + e.getMessage());
-										try {
-											throw e;
-										} catch (URISyntaxException | IOException e1) {
-											// TODO Auto-generated catch block
-											e1.printStackTrace();
-										}
-									} catch (Exception e) {
-										ConfirmStatus temp = confirmStatusService.findById(confirmStatus.getId());
-										temp.setUpdatedOn(new Date());
-										temp.setPexUpdateFlag("FAILED");
-										confirmStatusService.update(temp);
-										logger.debug("FAILED PEX REPOST" + e.getMessage());
-										try {
-											throw e;
-										} catch (Exception e1) {
-											// TODO Auto-generated catch block
-											e1.printStackTrace();
-										}
 									}
-								}
-							});
+								} catch (JSONException ex) {
+									ConfirmStatus temp2 = confirmStatusService.findById(confirmStatus.getId());
+									temp2.setUpdatedOn(new Date());
+									temp2.setPexUpdateFlag("FAILED");
+									confirmStatusService.update(temp2);
+									logger.debug("FAILED PEX REPOST" + ex.getMessage());
+									try {
+										throw ex;
+									} catch (JSONException e1) {
+										// TODO Auto-generated catch block
+										e1.printStackTrace();
+									}
 
-							pexThread.start();
+								}
+								logger.debug("pexPostResponseJsonString : " + pexPostResponseJsonString);
+
+							} catch (URISyntaxException | IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+								ConfirmStatus temp2 = confirmStatusService.findById(confirmStatus.getId());
+								temp2.setUpdatedOn(new Date());
+								temp2.setPexUpdateFlag("FAILED");
+								confirmStatusService.update(temp2);
+								logger.debug("FAILED PEX REPOST" + e.getMessage());
+								try {
+									throw e;
+								} catch (URISyntaxException | IOException e1) {
+									// TODO Auto-generated catch block
+									e1.printStackTrace();
+								}
+							} catch (Exception e) {
+								ConfirmStatus temp2 = confirmStatusService.findById(confirmStatus.getId());
+								temp2.setUpdatedOn(new Date());
+								temp2.setPexUpdateFlag("FAILED");
+								confirmStatusService.update(temp2);
+								logger.debug("FAILED PEX REPOST" + e.getMessage());
+								try {
+									throw e;
+								} catch (Exception e1) {
+									// TODO Auto-generated catch block
+									e1.printStackTrace();
+								}
+							}
 
 						}
 					}

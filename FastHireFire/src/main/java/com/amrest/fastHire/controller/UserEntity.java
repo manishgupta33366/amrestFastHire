@@ -63,22 +63,27 @@ public class UserEntity {
 	@PostMapping(value = ConstantManager.userEntity, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public String userEntity(@RequestBody String request, HttpServletRequest httprequest)
 			throws ParseException, ClientProtocolException, IOException, URISyntaxException, NamingException {
-		loggedInUser = httprequest.getUserPrincipal().getName();
-		parseRequest(request, httprequest);
-		URLManager genURL = new URLManager(getClass().getSimpleName(), configName);
-		String urlToCall = genURL.formURLToCall();
-		logger.info(ConstantManager.lineSeparator + ConstantManager.urlLog + urlToCall + ConstantManager.lineSeparator);
+		try {
+			loggedInUser = httprequest.getUserPrincipal().getName();
+			parseRequest(request, httprequest);
+			URLManager genURL = new URLManager(getClass().getSimpleName(), configName);
+			String urlToCall = genURL.formURLToCall();
+			logger.info(
+					ConstantManager.lineSeparator + ConstantManager.urlLog + urlToCall + ConstantManager.lineSeparator);
 
-		// Get details from server
-		URI uri = CommonFunctions.convertToURI(urlToCall);
-		HttpSession session = httprequest.getSession(false);
-		String userID = (String) session.getAttribute("userID");
-		logger.error("Got UserId from session in PositionVacacy: " + userID);
-		HttpConnectionPOST httpConnectionPOST = new HttpConnectionPOST(uri, URLManager.dConfiguration,
-				createBody(userID), UserEntity.class);
+			// Get details from server
+			URI uri = CommonFunctions.convertToURI(urlToCall);
+			HttpSession session = httprequest.getSession(false);
+			String userID = (String) session.getAttribute("userID");
+			logger.error("Got UserId from session in PositionVacacy: " + userID);
+			HttpConnectionPOST httpConnectionPOST = new HttpConnectionPOST(uri, URLManager.dConfiguration,
+					createBody(userID), UserEntity.class);
 
-		String result = httpConnectionPOST.connectToServer();
-		return result;
+			String result = httpConnectionPOST.connectToServer();
+			return result;
+		} catch (Exception e) {
+			return (e.getMessage());
+		}
 	}
 
 	private void parseRequest(String request, HttpServletRequest requestForSession) throws ParseException {
