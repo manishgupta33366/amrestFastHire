@@ -235,21 +235,22 @@ public class PreHireManagerController {
 
 		String vacantPositionFilter = "?$filter=" + "vacant eq true and company eq '" + paraMap.get("company") + "' "
 				+ "and department eq '" + paraMap.get("department") + "' and " + "(parentPosition/code eq '"
-				+ paraMap.get("position") + "' or parentPosition/parentPosition/code eq '" + paraMap.get("position")
-				+ "')" + "&$format=json" + "&$expand=employeeClassNav" + "&$select=" + "externalName_localized,"
-				+ "externalName_defaultValue," + "payGrade,jobTitle,code," + "employeeClassNav/label_defaultValue,"
-				+ "employeeClassNav/label_localized";
+				+ paraMap.get("position") + "' or (parentPosition/parentPosition/code eq '" + paraMap.get("position")
+				+ "' and parentPosition/vacant eq null))" + "&$format=json" + "&$expand=employeeClassNav" + "&$select="
+				+ "externalName_localized," + "externalName_defaultValue," + "payGrade,jobTitle,code,"
+				+ "employeeClassNav/label_defaultValue," + "employeeClassNav/label_localized";
 
 		if (vacantEmployeeClass != null) {
 			vacantPositionFilter = "?$filter=" + "vacant eq true and company eq '" + paraMap.get("company") + "' "
 					+ "and department eq '" + paraMap.get("department") + "' " + "and employeeClass eq '"
 					+ vacantEmployeeClass.getValue() + "' and " + "(parentPosition/code eq '" + paraMap.get("position")
-					+ "' or parentPosition/parentPosition/code eq '" + paraMap.get("position") + "')" + "&$format=json"
-					+ "&$expand=employeeClassNav" + "&$select=" + "externalName_localized,"
-					+ "externalName_defaultValue," + "payGrade,jobTitle,code," + "employeeClassNav/label_defaultValue,"
-					+ "employeeClassNav/label_localized";
+					+ "' or (parentPosition/parentPosition/code eq '" + paraMap.get("position")
+					+ "' and parentPosition/vacant eq null))" + "&$format=json" + "&$expand=employeeClassNav"
+					+ "&$select=" + "externalName_localized," + "externalName_defaultValue," + "payGrade,jobTitle,code,"
+					+ "employeeClassNav/label_defaultValue," + "employeeClassNav/label_localized";
 
 		}
+		logger.debug("vacantPositionFilter: " + vacantPositionFilter);
 		// get Vacant Positions
 
 		HttpResponse vacantPosResponse = destClient.callDestinationGET("/Position", vacantPositionFilter);
