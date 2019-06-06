@@ -375,7 +375,8 @@ public class PreHireManagerController {
 				updatedOn = updatedOn.substring(6, updatedOn.length() - 7);
 				logger.debug("currentdate: " + currentdate + " ::: updatedOn: " + updatedOn);
 				if (updatedOn.equals(currentdate)
-						|| !mdfDataObj.getString("cust_IS_DOC_GEN_SUCCESS").equalsIgnoreCase("SUCCESS")) {
+						|| !(String.valueOf(mdfDataObj.get("cust_IS_DOC_GEN_SUCCESS")).equalsIgnoreCase("null") ? ""
+								: mdfDataObj.getString("cust_IS_DOC_GEN_SUCCESS")).equalsIgnoreCase("SUCCESS")) {
 
 					HttpResponse userResponse = destClient.callDestinationGET("/User",
 							"?$filter=userId  eq '" + mdfDataObj.getString("externalCode")
@@ -1560,11 +1561,8 @@ public class PreHireManagerController {
 				}
 			}
 			// creating entry for the confirm status flags update
-			String personId = sfentityObject.getJSONObject("PerPerson").getString("perPersonUuid");
-			String company = sfentityObject.getJSONObject("EmpJob").getString("company");
-			String department = sfentityObject.getJSONObject("EmpJob").getString("department");
-			String position = sfentityObject.getJSONObject("EmpJob").getString("position");
 
+			updateMDFCompanyDepartment(destClient, map.get("userId"), sfentityObject.getJSONObject("EmpJob"));
 			try {
 
 				final Thread parentThread = new Thread(new Runnable() {
@@ -1743,9 +1741,12 @@ public class PreHireManagerController {
 													if (counter == pexFormMap.keySet().size()) {
 														JSONObject mdfStatus = getPersonStatusMDF(destClient,
 																sfentityObject.getJSONObject("EmpJob")
-																		.getString("userID"));
-														if (!mdfStatus.getString("cust_IS_PEX_SUCCESS")
-																.equalsIgnoreCase("FAILED")) {
+																		.getString("userId"));
+
+														if (!(String.valueOf(mdfStatus.get("cust_IS_PEX_SUCCESS"))
+																.equalsIgnoreCase("null") ? ""
+																		: mdfStatus.getString("cust_IS_PEX_SUCCESS"))
+																				.equalsIgnoreCase("FAILED")) {
 															// Updating MDF
 															mdfPostStatus = postPersonStatusMDF(
 																	destClient, sfentityObject.getJSONObject("EmpJob")
@@ -1923,8 +1924,11 @@ public class PreHireManagerController {
 									}
 								}
 								JSONObject mdfStatus = getPersonStatusMDF(destClient,
-										sfentityObject.getJSONObject("EmpJob").getString("userID"));
-								if (!mdfStatus.getString("cust_IS_SF_ENTITY_SUCCESS").equalsIgnoreCase("FAILED")) {
+										sfentityObject.getJSONObject("EmpJob").getString("userId"));
+
+								if (!(String.valueOf(mdfStatus.get("cust_IS_SF_ENTITY_SUCCESS")).equalsIgnoreCase(
+										"null") ? "" : mdfStatus.getString("cust_IS_SF_ENTITY_SUCCESS"))
+												.equalsIgnoreCase("FAILED")) {
 									mdfPostStatus = postPersonStatusMDF(destClient,
 											sfentityObject.getJSONObject("EmpJob").getString("userId"), "sf", "SUCCESS",
 											null);
@@ -2175,10 +2179,11 @@ public class PreHireManagerController {
 
 			JSONObject mdfStatus = getPersonStatusMDF(destClient, userId);
 			realTimePEXUpdateSuccess = new Boolean(false);
-			realTimePEXUpdateSuccess = mdfStatus.getString("cust_IS_PEX_SUCCESS").equalsIgnoreCase("SUCCESS") ? true
-					: false;
-			if (mdfStatus.getString("cust_IS_PEX_SUCCESS").equalsIgnoreCase("FAILED")
-					|| mdfStatus.getString("cust_IS_PEX_SUCCESS").equalsIgnoreCase("")) {
+			String custIsPEXSuccess = String.valueOf(mdfStatus.get("cust_IS_PEX_SUCCESS")).equalsIgnoreCase("null") ? ""
+					: mdfStatus.getString("cust_IS_PEX_SUCCESS");
+
+			realTimePEXUpdateSuccess = custIsPEXSuccess.equalsIgnoreCase("SUCCESS") ? true : false;
+			if (custIsPEXSuccess.equalsIgnoreCase("FAILED") || custIsPEXSuccess.equalsIgnoreCase("")) {
 
 				String mdfPostStatus = postPersonStatusMDF(destClient, personId, "pex", "BEGIN", null);
 				logger.debug("MDF POst 16 status: " + mdfPostStatus);
@@ -2329,8 +2334,9 @@ public class PreHireManagerController {
 										if (counter == pexFormMap.keySet().size()) {
 											mdfStatus = getPersonStatusMDF(destClient, userId);
 
-											if (!mdfStatus.getString("cust_IS_PEX_SUCCESS")
-													.equalsIgnoreCase("FAILED")) {
+											if (!(String.valueOf(mdfStatus.get("cust_IS_PEX_SUCCESS")).equalsIgnoreCase(
+													"null") ? "" : mdfStatus.getString("cust_IS_PEX_SUCCESS"))
+															.equalsIgnoreCase("FAILED")) {
 												// Updating MDF
 												mdfPostStatus = postPersonStatusMDF(destClient, userId, "pex",
 														"SUCCESS", null);
@@ -2401,10 +2407,9 @@ public class PreHireManagerController {
 				// SUCCESS
 				// if SF Entities Failed
 				mdfStatus = getPersonStatusMDF(destClient, userId);
-
-				if (mdfStatus.getString("cust_IS_SF_ENTITY_SUCCESS").equalsIgnoreCase("FAILED")
-						|| mdfStatus.getString("cust_IS_SF_ENTITY_SUCCESS").equalsIgnoreCase("")
-						|| mdfStatus.getString("cust_IS_SF_ENTITY_SUCCESS") == null) {
+				String isSFEntitySucccess = String.valueOf(mdfStatus.get("cust_IS_SF_ENTITY_SUCCESS"))
+						.equalsIgnoreCase("null") ? "" : mdfStatus.getString("cust_IS_SF_ENTITY_SUCCESS");
+				if (isSFEntitySucccess.equalsIgnoreCase("FAILED") || isSFEntitySucccess.equalsIgnoreCase("")) {
 
 					try {
 						logger.debug("SF REPOST START");
@@ -2509,8 +2514,14 @@ public class PreHireManagerController {
 											}
 										}
 									}
-									if (!getPersonStatusMDF(destClient, userId).getString("cust_IS_SF_ENTITY_SUCCESS")
-											.equalsIgnoreCase("FAILED")) {
+									JSONObject personStatusMDFTemp = getPersonStatusMDF(destClient, userId);
+									String isSFEntitySuccess = String
+											.valueOf(personStatusMDFTemp.get("cust_IS_SF_ENTITY_SUCCESS"))
+											.equalsIgnoreCase("null") ? ""
+													: personStatusMDFTemp.getString("cust_IS_SF_ENTITY_SUCCESS");
+
+									if (!(isSFEntitySuccess.equalsIgnoreCase("FAILED")
+											|| isSFEntitySuccess.equalsIgnoreCase(""))) {
 										mdfPostStatus = postPersonStatusMDF(destClient, userId, "sf", "SUCCESS", null);
 										logger.debug("MDF POst 24 status: " + mdfPostStatus);
 									}
@@ -3091,9 +3102,10 @@ public class PreHireManagerController {
 		destClient.setHeaders(destClient.getDestProperty("Authentication"));
 		// Fetching MDF entry for the userID
 		HttpResponse mdfEntryForUser = destClient.callDestinationGET("/cust_personIdGenerate",
-				"?$format=json&$filter=" + userID);
+				"?$format=json&$filter=externalCode eq '" + userID + "'");
 		String mdfEntryForUserJsonString = EntityUtils.toString(mdfEntryForUser.getEntity(), "UTF-8");
 		JSONObject mdfEntryForUserResponseObject = new JSONObject(mdfEntryForUserJsonString);
+		logger.debug("mdfEntryForUserResponseObject: " + mdfEntryForUserResponseObject.toString());
 		JSONObject postObj = mdfEntryForUserResponseObject.getJSONObject("d").getJSONArray("results").getJSONObject(0);
 		logger.debug("getPersonStatusMDF: for userID: " + userID + " response: " + postObj.toString());
 		return postObj;
@@ -3121,10 +3133,48 @@ public class PreHireManagerController {
 		default:
 			break;
 		}
-		postObj.put("cust_UPDATED_ON", new Date());
+		postObj.put("cust_UPDATED_ON", "/Date(" + new Date().getTime() + ")/");
+		postObj.remove("lastModifiedDateTime");
+		postObj.remove("createdDateTime");
+		postObj.remove("lastModifiedBy");
+		postObj.remove("mdfSystemRecordStatus");
+		postObj.remove("createdBy");
+		postObj.remove("createdBy");
+		postObj.remove("createdByNav");
+		postObj.remove("lastModifiedByNav");
+		postObj.remove("mdfSystemRecordStatusNav");
+		postObj.remove("wfRequestNav");
 		HttpResponse updateresponse = destClient.callDestinationPOST("/upsert", "?$format=json&purgeType=full",
 				postObj.toString());
-		if (updateresponse.getStatusLine().getStatusCode() != 200) {
+		logger.debug("updateResponse MDF: " + updateresponse.getStatusLine().getStatusCode());
+		if (updateresponse.getStatusLine().getStatusCode() == 200) {
+			return "success";
+		}
+		return "failed";
+	}
+
+	private String updateMDFCompanyDepartment(DestinationClient destClient, String userID, JSONObject empJob)
+			throws ClientProtocolException, NamingException, IOException, URISyntaxException {
+		// Fetching MDF entry for the userID
+		JSONObject postObj = getPersonStatusMDF(destClient, userID);
+		postObj.put("cust_UPDATED_ON", "/Date(" + new Date().getTime() + ")/");
+		postObj.remove("lastModifiedDateTime");
+		postObj.remove("createdDateTime");
+		postObj.remove("lastModifiedBy");
+		postObj.remove("mdfSystemRecordStatus");
+		postObj.remove("createdBy");
+		postObj.remove("createdBy");
+		postObj.remove("createdByNav");
+		postObj.remove("lastModifiedByNav");
+		postObj.remove("mdfSystemRecordStatusNav");
+		postObj.remove("wfRequestNav");
+		postObj.put("cust_COMPANY", empJob.getString("company"));
+		postObj.put("cust_DEPARTMENT", empJob.getString("department"));
+		postObj.put("cust_POSITION", empJob.getString("position"));
+		HttpResponse updateresponse = destClient.callDestinationPOST("/upsert", "?$format=json&purgeType=full",
+				postObj.toString());
+		logger.debug("updateMDFCompanyDepartment MDF: " + updateresponse.getStatusLine().getStatusCode());
+		if (updateresponse.getStatusLine().getStatusCode() == 200) {
 			return "success";
 		}
 		return "failed";
