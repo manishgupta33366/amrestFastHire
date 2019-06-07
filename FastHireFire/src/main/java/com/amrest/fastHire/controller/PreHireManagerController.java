@@ -290,78 +290,13 @@ public class PreHireManagerController {
 
 			SFConstants employeeClassConstant = sfConstantsService.findById("employeeClassId");
 			SFConstants empStatusConstant = sfConstantsService.findById("emplStatusId");
-
-			// get OnGoing Hiring
-			// get OnGoing Hiring
-			HttpResponse ongoingPosResponse = destClient.callDestinationGET("/EmpJob", "?$format=json&$filter="
-					+ "employeeClass eq '" + employeeClassConstant.getValue() + "' and " + "company eq '"
-					+ paraMap.get("company") + "' and " + "department eq '" + paraMap.get("department") + "' and "
-					+ "emplStatusNav/id ne '" + empStatusConstant.getValue() + "' "
-					+ "and userNav/userId ne null &$expand=positionNav,userNav,"
-					+ "positionNav/employeeClassNav,userNav/personKeyNav"
-					+ "&$select=userId,startDate,customString11,position," + "positionNav/externalName_localized,"
-					+ "positionNav/externalName_defaultValue," + "positionNav/payGrade,positionNav/jobTitle,"
-					+ "userNav/userId,userNav/username,userNav/defaultFullName," + "userNav/firstName,userNav/lastName,"
-					+ "positionNav/employeeClassNav/label_localized,"
-					+ "positionNav/employeeClassNav/label_defaultValue," + "userNav/personKeyNav/perPersonUuid");
-
-			String ongoingPosResponseJsonString = EntityUtils.toString(ongoingPosResponse.getEntity(), "UTF-8");
-			JSONObject ongoingPosResponseObject = new JSONObject(ongoingPosResponseJsonString);
-			JSONArray ongoingPosResultArray = ongoingPosResponseObject.getJSONObject("d").getJSONArray("results");
-
-			SimpleDateFormat dateformatter = new SimpleDateFormat("dd/MM/yyyy");
-			Date today = dateformatter.parse(dateformatter.format(new Date()));
+			Date today = new Date();
 			String currentdate = Long.toString(today.getTime());
-			for (int i = 0; i < ongoingPosResultArray.length(); i++) {
+			currentdate = convertMilliSecToDate(currentdate);
+			HashMap<String, JSONObject> candidatesAlreadyInReturnPositionsArray = new HashMap<>();
 
-				JSONObject ongoingPos = ongoingPosResultArray.getJSONObject(i);
-				// logger.debug("userNav"+ongoingPos.get("userNav"));
-
-				if (!ongoingPos.get("userNav").toString().equalsIgnoreCase("null")) {
-
-					String personuuId = ongoingPos.getJSONObject("userNav").getJSONObject("personKeyNav")
-							.getString("perPersonUuid");
-
-					DashBoardPositionClass pos = new DashBoardPositionClass();
-					pos.setPayGrade(ongoingPos.getJSONObject("positionNav").getString("payGrade"));
-					pos.setPositionCode(ongoingPos.getString("position"));
-					pos.setPositionTitle(
-							ongoingPos.getJSONObject("positionNav").getString("externalName_localized") != null
-									? ongoingPos.getJSONObject("positionNav").getString("externalName_localized")
-									: ongoingPos.getJSONObject("positionNav").getString("externalName_defaultValue"));
-					pos.setEmployeeClassName(ongoingPos.getJSONObject("positionNav").getJSONObject("employeeClassNav")
-							.getString("label_localized") != null
-									? ongoingPos.getJSONObject("positionNav").getJSONObject("employeeClassNav")
-											.getString("label_localized")
-									: ongoingPos.getJSONObject("positionNav").getJSONObject("employeeClassNav")
-											.getString("label_defaultValue"));
-					pos.setUserFirstName(ongoingPos.getJSONObject("userNav").getString("firstName"));
-					pos.setUserLastName(ongoingPos.getJSONObject("userNav").getString("lastName"));
-					pos.setUserId(ongoingPos.getJSONObject("userNav").getString("userId"));
-					// pos.setLastUpdatedDate(ongoingPos.getString("createdOn"));
-					pos.setVacant(false);
-					pos.setStatuses(null);
-					String startDate = ongoingPos.getString("customString11");
-					String smilliSec = startDate.substring(startDate.indexOf("(") + 1, startDate.indexOf(")"));
-					long smilliSecLong = Long.valueOf(smilliSec).longValue() - TimeUnit.DAYS.toMillis(padStartDate);
-					smilliSec = Objects.toString(smilliSecLong, null);
-					startDate = startDate.replace(
-							startDate.substring(startDate.indexOf("(") + 1, startDate.lastIndexOf(")")), smilliSec);
-					pos.setStartDate(startDate);
-
-					long diffInMillies = Math.abs(smilliSecLong - today.getTime());
-					long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
-					pos.setDayDiff(Objects.toString(diff, null)); // calculate
-																	// day
-																	// difference
-
-					returnPositions.add(pos);
-
-				}
-
-			}
-
-			// add the item till the DB has an entry of ongoing
+			// Adding candidates those are already confirmed or any candidate which got any
+			// error while initiating
 			HttpResponse mdfData = destClient.callDestinationGET("/cust_personIdGenerate",
 					"?$format=json&$filter=cust_DEPARTMENT ne null and cust_COMPANY ne null and cust_POSITION ne null and cust_COMPANY eq '"
 							+ paraMap.get("company") + "' and cust_DEPARTMENT eq '" + paraMap.get("department") + "'");
@@ -372,12 +307,14 @@ public class PreHireManagerController {
 			for (int i = 0; i < mdfDataResponseObjectResultArray.length(); i++) {
 				JSONObject mdfDataObj = mdfDataResponseObjectResultArray.getJSONObject(i);
 				String updatedOn = mdfDataObj.getString("cust_UPDATED_ON");
-				updatedOn = updatedOn.substring(6, updatedOn.length() - 7);
+				updatedOn = convertMilliSecToDate(updatedOn.substring(6, updatedOn.length() - 7));
+
 				logger.debug("currentdate: " + currentdate + " ::: updatedOn: " + updatedOn);
-				if (updatedOn.equals(currentdate)
+				if (updatedOn.equalsIgnoreCase(currentdate)
 						|| !(String.valueOf(mdfDataObj.get("cust_IS_DOC_GEN_SUCCESS")).equalsIgnoreCase("null") ? ""
 								: mdfDataObj.getString("cust_IS_DOC_GEN_SUCCESS")).equalsIgnoreCase("SUCCESS")) {
 
+					candidatesAlreadyInReturnPositionsArray.put(mdfDataObj.getString("externalCode"), mdfDataObj);
 					HttpResponse userResponse = destClient.callDestinationGET("/User",
 							"?$filter=userId  eq '" + mdfDataObj.getString("externalCode")
 									+ "'&$format=json&$select=userId,lastName,firstName");
@@ -421,9 +358,9 @@ public class PreHireManagerController {
 						Map<String, String> statusMap = new HashMap<String, String>();
 
 						statusMap.put("SFFlag",
-								String.valueOf(mdfDataObj.get("cust_SF_ENTITYNAME_FAILED")).equalsIgnoreCase("null")
+								String.valueOf(mdfDataObj.get("cust_IS_SF_ENTITY_SUCCESS")).equalsIgnoreCase("null")
 										? ""
-										: mdfDataObj.getString("cust_SF_ENTITYNAME_FAILED"));
+										: mdfDataObj.getString("cust_IS_SF_ENTITY_SUCCESS"));
 						statusMap.put("PexFlag",
 								String.valueOf(mdfDataObj.get("cust_IS_PEX_SUCCESS")).equalsIgnoreCase("null") ? ""
 										: mdfDataObj.getString("cust_IS_PEX_SUCCESS"));
@@ -437,6 +374,73 @@ public class PreHireManagerController {
 					}
 				}
 			}
+
+			// get OnGoing Hiring
+			// get OnGoing Hiring Candidate those are correctly initiated
+			HttpResponse ongoingPosResponse = destClient.callDestinationGET("/EmpJob", "?$format=json&$filter="
+					+ "employeeClass eq '" + employeeClassConstant.getValue() + "' and " + "company eq '"
+					+ paraMap.get("company") + "' and " + "department eq '" + paraMap.get("department") + "' and "
+					+ "emplStatusNav/id ne '" + empStatusConstant.getValue() + "' "
+					+ "and userNav/userId ne null &$expand=positionNav,userNav,"
+					+ "positionNav/employeeClassNav,userNav/personKeyNav"
+					+ "&$select=userId,startDate,customString11,position," + "positionNav/externalName_localized,"
+					+ "positionNav/externalName_defaultValue," + "positionNav/payGrade,positionNav/jobTitle,"
+					+ "userNav/userId,userNav/username,userNav/defaultFullName," + "userNav/firstName,userNav/lastName,"
+					+ "positionNav/employeeClassNav/label_localized,"
+					+ "positionNav/employeeClassNav/label_defaultValue," + "userNav/personKeyNav/perPersonUuid");
+
+			String ongoingPosResponseJsonString = EntityUtils.toString(ongoingPosResponse.getEntity(), "UTF-8");
+			JSONObject ongoingPosResponseObject = new JSONObject(ongoingPosResponseJsonString);
+			JSONArray ongoingPosResultArray = ongoingPosResponseObject.getJSONObject("d").getJSONArray("results");
+
+			for (int i = 0; i < ongoingPosResultArray.length(); i++) {
+
+				JSONObject ongoingPos = ongoingPosResultArray.getJSONObject(i);
+				// logger.debug("userNav"+ongoingPos.get("userNav"));
+
+				if (!(ongoingPos.get("userNav").toString().equalsIgnoreCase("null")
+						|| candidatesAlreadyInReturnPositionsArray
+								.containsKey(ongoingPos.getJSONObject("userNav").getString("userId")))) {
+
+					DashBoardPositionClass pos = new DashBoardPositionClass();
+					pos.setPayGrade(ongoingPos.getJSONObject("positionNav").getString("payGrade"));
+					pos.setPositionCode(ongoingPos.getString("position"));
+					pos.setPositionTitle(
+							ongoingPos.getJSONObject("positionNav").getString("externalName_localized") != null
+									? ongoingPos.getJSONObject("positionNav").getString("externalName_localized")
+									: ongoingPos.getJSONObject("positionNav").getString("externalName_defaultValue"));
+					pos.setEmployeeClassName(ongoingPos.getJSONObject("positionNav").getJSONObject("employeeClassNav")
+							.getString("label_localized") != null
+									? ongoingPos.getJSONObject("positionNav").getJSONObject("employeeClassNav")
+											.getString("label_localized")
+									: ongoingPos.getJSONObject("positionNav").getJSONObject("employeeClassNav")
+											.getString("label_defaultValue"));
+					pos.setUserFirstName(ongoingPos.getJSONObject("userNav").getString("firstName"));
+					pos.setUserLastName(ongoingPos.getJSONObject("userNav").getString("lastName"));
+					pos.setUserId(ongoingPos.getJSONObject("userNav").getString("userId"));
+					// pos.setLastUpdatedDate(ongoingPos.getString("createdOn"));
+					pos.setVacant(false);
+					pos.setStatuses(null);
+					String startDate = ongoingPos.getString("customString11");
+					String smilliSec = startDate.substring(startDate.indexOf("(") + 1, startDate.indexOf(")"));
+					long smilliSecLong = Long.valueOf(smilliSec).longValue() - TimeUnit.DAYS.toMillis(padStartDate);
+					smilliSec = Objects.toString(smilliSecLong, null);
+					startDate = startDate.replace(
+							startDate.substring(startDate.indexOf("(") + 1, startDate.lastIndexOf(")")), smilliSec);
+					pos.setStartDate(startDate);
+
+					long diffInMillies = Math.abs(smilliSecLong - today.getTime());
+					long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+					pos.setDayDiff(Objects.toString(diff, null)); // calculate
+																	// day
+																	// difference
+
+					returnPositions.add(pos);
+
+				}
+
+			}
+
 			// return the JSON Object
 			return ResponseEntity.ok().body(returnPositions);
 		} catch (Exception e) {
@@ -1200,7 +1204,7 @@ public class PreHireManagerController {
 						// logger.debug("Object no Array
 						// positionEntity"+positionEntity);
 					} catch (JSONException exception) {
-
+						exception.printStackTrace();
 						break;
 					}
 				}
@@ -1215,6 +1219,7 @@ public class PreHireManagerController {
 					// logger.debug("positionEntity.get(techPathArray[i]).toString()"+i+positionEntity.get(techPathArray[i]).toString());
 					return positionEntity.get(techPathArray[i]).toString();
 				} catch (JSONException exception) {
+					exception.printStackTrace();
 					return "";
 				}
 			}
@@ -1372,6 +1377,7 @@ public class PreHireManagerController {
 			}
 			return new ResponseEntity<>("Error: Candidate already inActive", HttpStatus.INTERNAL_SERVER_ERROR);
 		} catch (Exception e) {
+			e.printStackTrace();
 			return new ResponseEntity<>("Error: " + e.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -1562,7 +1568,7 @@ public class PreHireManagerController {
 			}
 			// creating entry for the confirm status flags update
 
-			updateMDFCompanyDepartment(destClient, map.get("userId"), sfentityObject.getJSONObject("EmpJob"));
+			updateMDFCompanyDepartment(destClient, map, sfentityObject.getJSONObject("EmpJob"));
 			try {
 
 				final Thread parentThread = new Thread(new Runnable() {
@@ -1953,6 +1959,7 @@ public class PreHireManagerController {
 
 				return ResponseEntity.ok().body("Success");
 			} catch (Exception e) {
+				e.printStackTrace();
 				return new ResponseEntity<>("Error: " + e.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
@@ -2079,6 +2086,7 @@ public class PreHireManagerController {
 			}
 			return new ResponseEntity<>("Error", HttpStatus.INTERNAL_SERVER_ERROR);
 		} catch (Exception e) {
+			e.printStackTrace();
 			mdfPostStatus = postPersonStatusMDF(destClient, personId, "doc", "FAILED", null);
 			logger.debug("MDF POst 15 status: " + mdfPostStatus);
 			return new ResponseEntity<>("Error: " + e.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -2181,7 +2189,7 @@ public class PreHireManagerController {
 			realTimePEXUpdateSuccess = new Boolean(false);
 			String custIsPEXSuccess = String.valueOf(mdfStatus.get("cust_IS_PEX_SUCCESS")).equalsIgnoreCase("null") ? ""
 					: mdfStatus.getString("cust_IS_PEX_SUCCESS");
-
+			map.put("startDate", mdfStatus.getString("cust_START_DATE"));
 			realTimePEXUpdateSuccess = custIsPEXSuccess.equalsIgnoreCase("SUCCESS") ? true : false;
 			if (custIsPEXSuccess.equalsIgnoreCase("FAILED") || custIsPEXSuccess.equalsIgnoreCase("")) {
 
@@ -2266,7 +2274,7 @@ public class PreHireManagerController {
 							String validFromDate = map.get("startDate");
 							Calendar cal = Calendar.getInstance();
 							String milliSec = validFromDate.substring(validFromDate.indexOf("(") + 1,
-									validFromDate.indexOf(")"));
+									validFromDate.indexOf("+"));
 							long milliSecLong = Long.valueOf(milliSec).longValue();
 							cal.setTimeInMillis(milliSecLong);
 							validFromDate = formatter.format(cal.getTime());
@@ -2351,6 +2359,7 @@ public class PreHireManagerController {
 									}
 								} catch (JSONException ex) {
 									// Updating MDF
+									ex.printStackTrace();
 									mdfPostStatus = postPersonStatusMDF(destClient, userId, "pex", "FAILED", null);
 									logger.debug("MDF POst 19 status: " + mdfPostStatus);
 									logger.debug("FAILED PEX REPOST" + ex.getMessage());
@@ -2378,6 +2387,7 @@ public class PreHireManagerController {
 									e1.printStackTrace();
 								}
 							} catch (Exception e) {
+								e.printStackTrace();
 								mdfPostStatus = postPersonStatusMDF(destClient, userId, "pex", "FAILED", null);
 								logger.debug("MDF POst 21 status: " + mdfPostStatus);
 								logger.debug("FAILED PEX REPOST" + e.getMessage());
@@ -2396,6 +2406,7 @@ public class PreHireManagerController {
 				catch (Exception e) {
 					mdfPostStatus = postPersonStatusMDF(destClient, userId, "pex", "FAILED", null);
 					logger.debug("MDF POst 22 status: " + mdfPostStatus);
+					e.printStackTrace();
 					return new ResponseEntity<>("Error: " + e.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 
@@ -2545,7 +2556,7 @@ public class PreHireManagerController {
 										// TODO Auto-generated catch block
 										e1.printStackTrace();
 									}
-
+									e.printStackTrace();
 								} catch (Exception e) {
 									String mdfPostStatus = null;
 									try {
@@ -2576,11 +2587,13 @@ public class PreHireManagerController {
 							// TODO Auto-generated catch block
 							e1.printStackTrace();
 						}
+						e.printStackTrace();
 					}
 				}
 			}
 			return ResponseEntity.ok().body("SUCCESS");
 		} catch (Exception e) {
+			e.printStackTrace();
 			return new ResponseEntity<>("Error: " + e.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -3153,10 +3166,10 @@ public class PreHireManagerController {
 		return "failed";
 	}
 
-	private String updateMDFCompanyDepartment(DestinationClient destClient, String userID, JSONObject empJob)
-			throws ClientProtocolException, NamingException, IOException, URISyntaxException {
+	private String updateMDFCompanyDepartment(DestinationClient destClient, Map<String, String> userData,
+			JSONObject empJob) throws ClientProtocolException, NamingException, IOException, URISyntaxException {
 		// Fetching MDF entry for the userID
-		JSONObject postObj = getPersonStatusMDF(destClient, userID);
+		JSONObject postObj = getPersonStatusMDF(destClient, userData.get("userId"));
 		postObj.put("cust_UPDATED_ON", "/Date(" + new Date().getTime() + ")/");
 		postObj.remove("lastModifiedDateTime");
 		postObj.remove("createdDateTime");
@@ -3171,6 +3184,7 @@ public class PreHireManagerController {
 		postObj.put("cust_COMPANY", empJob.getString("company"));
 		postObj.put("cust_DEPARTMENT", empJob.getString("department"));
 		postObj.put("cust_POSITION", empJob.getString("position"));
+		postObj.put("cust_START_DATE", userData.get("startDate"));
 		HttpResponse updateresponse = destClient.callDestinationPOST("/upsert", "?$format=json&purgeType=full",
 				postObj.toString());
 		logger.debug("updateMDFCompanyDepartment MDF: " + updateresponse.getStatusLine().getStatusCode());
@@ -3185,4 +3199,13 @@ public class PreHireManagerController {
 		Date today = dateformatter.parse(dateformatter.format(new Date(date)));
 		return Long.toString(today.getTime());
 	}
+
+	private String convertMilliSecToDate(String millisec) {
+		DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+		long milliSeconds = Long.parseLong(millisec);
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTimeInMillis(milliSeconds);
+		return (formatter.format(calendar.getTime()));
+	}
+
 }
