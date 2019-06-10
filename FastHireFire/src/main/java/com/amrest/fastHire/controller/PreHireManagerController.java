@@ -307,6 +307,7 @@ public class PreHireManagerController {
 			for (int i = 0; i < mdfDataResponseObjectResultArray.length(); i++) {
 				JSONObject mdfDataObj = mdfDataResponseObjectResultArray.getJSONObject(i);
 				String updatedOn = mdfDataObj.getString("cust_UPDATED_ON");
+				logger.debug("cust_UPDATED_ON: " + mdfDataObj.getString("cust_UPDATED_ON"));
 				updatedOn = convertMilliSecToDate(updatedOn.substring(6, updatedOn.length() - 7));
 
 				logger.debug("currentdate: " + currentdate + " ::: updatedOn: " + updatedOn);
@@ -2273,8 +2274,12 @@ public class PreHireManagerController {
 							JSONArray postFieldsArray = new JSONArray();
 							String validFromDate = map.get("startDate");
 							Calendar cal = Calendar.getInstance();
-							String milliSec = validFromDate.substring(validFromDate.indexOf("(") + 1,
-									validFromDate.indexOf("+"));
+
+							String milliSec = validFromDate.indexOf("+") != -1
+									? validFromDate.substring(validFromDate.indexOf("(") + 1,
+											validFromDate.indexOf("+"))
+									: validFromDate.substring(validFromDate.indexOf("(") + 1,
+											validFromDate.length() - 2);
 							long milliSecLong = Long.valueOf(milliSec).longValue();
 							cal.setTimeInMillis(milliSecLong);
 							validFromDate = formatter.format(cal.getTime());
