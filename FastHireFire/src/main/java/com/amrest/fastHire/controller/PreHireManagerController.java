@@ -1722,6 +1722,7 @@ public class PreHireManagerController {
 												pexFormJsonRepMap.put("id", values[3]);
 												pexURLCreationHelp.put("viewId", values[1]);
 												pexFormJsonRepMap.put("viewId", values[1]);
+												postFieldsArray.put(postField);
 											} else {
 												postField
 														.put("value",
@@ -1731,8 +1732,8 @@ public class PreHireManagerController {
 												pexFormJsonRepMap.put("id", values[3]);
 												pexURLCreationHelp.put("viewId", values[1]);
 												pexFormJsonRepMap.put("viewId", values[1]);
+												postFieldsArray.put(postField);
 											}
-											postFieldsArray.put(postField);
 										}
 										segments.getJSONObject(0).put("fields", postFieldsArray);
 										pexFormJsonRepMap.put("segmentsArray", segments.toString());
@@ -2352,6 +2353,7 @@ public class PreHireManagerController {
 									pexFormJsonRepMap.put("id", values[3]);
 									pexURLCreationHelp.put("viewId", values[1]);
 									pexFormJsonRepMap.put("viewId", values[1]);
+									postFieldsArray.put(postField);
 								} else {
 									postField.put("value",
 											String.valueOf(mdfFieldsObject.get(values[1])).equalsIgnoreCase("null") ? ""
@@ -2359,8 +2361,9 @@ public class PreHireManagerController {
 									pexFormJsonRepMap.put("id", values[3]);
 									pexURLCreationHelp.put("viewId", values[1]);
 									pexFormJsonRepMap.put("viewId", values[1]);
+									postFieldsArray.put(postField);
 								}
-								postFieldsArray.put(postField);
+
 							}
 							segments.getJSONObject(0).put("fields", postFieldsArray);
 							pexFormJsonRepMap.put("segmentsArray", segments.toString());
