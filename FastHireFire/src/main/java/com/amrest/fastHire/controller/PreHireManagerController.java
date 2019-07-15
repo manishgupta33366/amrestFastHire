@@ -100,7 +100,7 @@ import com.sap.core.connectivity.api.configuration.DestinationConfiguration;
 public class PreHireManagerController {
 	public static final String destinationName = "prehiremgrSFTest";
 	public static final String scpDestinationName = "scpiBasic";
-	public static final String pexDestinationName = "FastHirePEX";
+	public static final String pexDestinationName = "FastHirePEX_v11";
 	public static final String docdestinationName = "DocumentGeneration";
 	public static final String pocDocDestinationName = "DocGeneration";
 	private Context ctx;
@@ -1632,6 +1632,7 @@ public class PreHireManagerController {
 										}
 
 									}
+
 									mdfFieldKeys = mdfFieldsObject2.keys();
 									while (mdfFieldKeys.hasNext()) {
 										String key = (String) mdfFieldKeys.next();
@@ -1655,7 +1656,7 @@ public class PreHireManagerController {
 										}
 
 									}
-
+									logger.debug("pexFormMap:" + pexFormMap.toString());
 									JSONObject empJobResponseJsonObject = new JSONObject(
 											entityResponseMap.get("EmpJob"));
 									empJobResponseJsonObject = empJobResponseJsonObject.getJSONObject("d")
@@ -1695,18 +1696,18 @@ public class PreHireManagerController {
 										validFromDate = formatter.format(cal.getTime());
 										validFromDate = validFromDate + "T00:00:00.000Z";
 										// valid from and valid to dates.
-										JSONObject validFromPostField = new JSONObject();
+										// JSONObject validFromPostField = new JSONObject();
 //										validFromPostField.put("fieldId", "valid_from");
 //										validFromPostField.put("value", validFromDate);
 										pexFormJsonRepMap.put("validFrom", validFromDate);
-										postFieldsArray.put(validFromPostField);
+										// postFieldsArray.put(validFromPostField);
 
-										JSONObject validToPostField = new JSONObject();
+										// JSONObject validToPostField = new JSONObject();
 //										validToPostField.put("fieldId", "valid_to");
 //										validToPostField.put("value", "9999-12-31T00:00:00.000Z");
 										pexFormJsonRepMap.put("validTo", "9999-12-31T00:00:00.000Z");
 										pexFormJsonRepMap.put("preHireData", "true");
-										postFieldsArray.put(validToPostField);
+										// postFieldsArray.put(validToPostField);
 
 										fieldValues = pexFormMap.get(pexFormMapKey);
 										for (String[] values : fieldValues) {
@@ -1719,21 +1720,23 @@ public class PreHireManagerController {
 														String.valueOf(mdfFieldsObject2.get(values[1]))
 																.equalsIgnoreCase("null") ? ""
 																		: mdfFieldsObject2.getString(values[1]));
-												pexFormJsonRepMap.put("id", values[3]);
-												pexURLCreationHelp.put("viewId", values[1]);
-												pexFormJsonRepMap.put("viewId", values[1]);
-												postFieldsArray.put(postField);
+												pexFormJsonRepMap.put("id", values[0]);
+												pexURLCreationHelp.put("viewId", values[3]);
+												pexFormJsonRepMap.put("viewId", values[3]);
+
+												// logger.debug("postFieldsArray" + postFieldsArray.toString());
 											} else {
 												postField
 														.put("value",
 																String.valueOf(mdfFieldsObject.get(values[1]))
 																		.equalsIgnoreCase("null") ? ""
 																				: mdfFieldsObject.getString(values[1]));
-												pexFormJsonRepMap.put("id", values[3]);
-												pexURLCreationHelp.put("viewId", values[1]);
-												pexFormJsonRepMap.put("viewId", values[1]);
-												postFieldsArray.put(postField);
+												pexFormJsonRepMap.put("id", values[0]);
+												pexURLCreationHelp.put("viewId", values[3]);
+												pexFormJsonRepMap.put("viewId", values[3]);
+												// logger.debug("postFieldsArray" + postFieldsArray.toString());
 											}
+											postFieldsArray.put(postField);
 										}
 										segments.getJSONObject(0).put("fields", postFieldsArray);
 										pexFormJsonRepMap.put("segmentsArray", segments.toString());
@@ -1742,16 +1745,25 @@ public class PreHireManagerController {
 										String pexFormPostString = pexFormPostObj.toString();
 
 										for (Map.Entry<String, String> entry : pexFormJsonRepMap.entrySet()) {
+											// logger.debug(entry.getKey() + " : " + entry.getValue());
 											if (!entry.getKey().equalsIgnoreCase("segmentsArray")) {
+
+												// logger.debug("pexFormPostString: " + pexFormPostString);
 												pexFormPostString = pexFormPostString
 														.replaceAll("<" + entry.getKey() + ">", entry.getValue());
+												// logger.debug("pexFormPostString 1: " + pexFormPostString);
 											} else {
+//												String temp = entry.getValue();
+//												temp = temp.substring(1, temp.length());
+//												temp = temp.substring(0, temp.length() - 1);
+												// logger.debug("pexFormPostString 2: " + pexFormPostString);
 												pexFormPostString = pexFormPostString
 														.replaceAll("\"<" + entry.getKey() + ">\"", entry.getValue());
 
+												// logger.debug("pexFormPostString 3: " + pexFormPostString);
 											}
 										}
-										logger.debug("pexFormPostString : " + pexFormPostString);
+										logger.debug("pexFormPostString 4 : " + pexFormPostString);
 										final String finalPexFormPostString = pexFormPostString;
 
 										try {
@@ -2266,6 +2278,7 @@ public class PreHireManagerController {
 							}
 
 						}
+
 						mdfFieldKeys = mdfFieldsObject2.keys();
 						while (mdfFieldKeys.hasNext()) {
 							String key = (String) mdfFieldKeys.next();
@@ -2289,7 +2302,7 @@ public class PreHireManagerController {
 							}
 
 						}
-
+						logger.debug("pexFormMap:" + pexFormMap.toString());
 						JSONObject empJobResponseJsonObject = new JSONObject(entityResponseMap.get("EmpJob"));
 						empJobResponseJsonObject = empJobResponseJsonObject.getJSONObject("d").getJSONArray("results")
 								.getJSONObject(0);
@@ -2326,18 +2339,18 @@ public class PreHireManagerController {
 							validFromDate = formatter.format(cal.getTime());
 							validFromDate = validFromDate + "T00:00:00.000Z";
 							// valid from and valid to dates.
-							JSONObject validFromPostField = new JSONObject();
+							// JSONObject validFromPostField = new JSONObject();
 //							validFromPostField.put("fieldId", "valid_from");
 //							validFromPostField.put("value", validFromDate);
 							pexFormJsonRepMap.put("validFrom", validFromDate);
-							postFieldsArray.put(validFromPostField);
+							// postFieldsArray.put(validFromPostField);
 
-							JSONObject validToPostField = new JSONObject();
+							// JSONObject validToPostField = new JSONObject();
 //							validToPostField.put("fieldId", "valid_to");
 //							validToPostField.put("value", "9999-12-31T00:00:00.000Z");
 							pexFormJsonRepMap.put("validTo", "9999-12-31T00:00:00.000Z");
 							pexFormJsonRepMap.put("preHireData", "true");
-							postFieldsArray.put(validToPostField);
+							// postFieldsArray.put(validToPostField);
 
 							fieldValues = pexFormMap.get(pexFormMapKey);
 							for (String[] values : fieldValues) {
@@ -2350,20 +2363,21 @@ public class PreHireManagerController {
 											String.valueOf(mdfFieldsObject2.get(values[1])).equalsIgnoreCase("null")
 													? ""
 													: mdfFieldsObject2.getString(values[1]));
-									pexFormJsonRepMap.put("id", values[3]);
-									pexURLCreationHelp.put("viewId", values[1]);
-									pexFormJsonRepMap.put("viewId", values[1]);
-									postFieldsArray.put(postField);
+									pexFormJsonRepMap.put("id", values[0]);
+									pexURLCreationHelp.put("viewId", values[3]);
+									pexFormJsonRepMap.put("viewId", values[3]);
+
+									// logger.debug("postFieldsArray" + postFieldsArray.toString());
 								} else {
 									postField.put("value",
 											String.valueOf(mdfFieldsObject.get(values[1])).equalsIgnoreCase("null") ? ""
 													: mdfFieldsObject.getString(values[1]));
-									pexFormJsonRepMap.put("id", values[3]);
-									pexURLCreationHelp.put("viewId", values[1]);
-									pexFormJsonRepMap.put("viewId", values[1]);
-									postFieldsArray.put(postField);
+									pexFormJsonRepMap.put("id", values[0]);
+									pexURLCreationHelp.put("viewId", values[3]);
+									pexFormJsonRepMap.put("viewId", values[3]);
+									// logger.debug("postFieldsArray" + postFieldsArray.toString());
 								}
-
+								postFieldsArray.put(postField);
 							}
 							segments.getJSONObject(0).put("fields", postFieldsArray);
 							pexFormJsonRepMap.put("segmentsArray", segments.toString());
@@ -2372,22 +2386,31 @@ public class PreHireManagerController {
 							String pexFormPostString = pexFormPostObj.toString();
 
 							for (Map.Entry<String, String> entry : pexFormJsonRepMap.entrySet()) {
+								// logger.debug(entry.getKey() + " : " + entry.getValue());
 								if (!entry.getKey().equalsIgnoreCase("segmentsArray")) {
+
+									// logger.debug("pexFormPostString: " + pexFormPostString);
 									pexFormPostString = pexFormPostString.replaceAll("<" + entry.getKey() + ">",
 											entry.getValue());
+									// logger.debug("pexFormPostString 1: " + pexFormPostString);
 								} else {
+//									String temp = entry.getValue();
+//									temp = temp.substring(1, temp.length());
+//									temp = temp.substring(0, temp.length() - 1);
+									// logger.debug("pexFormPostString 2: " + pexFormPostString);
 									pexFormPostString = pexFormPostString.replaceAll("\"<" + entry.getKey() + ">\"",
 											entry.getValue());
 
+									// logger.debug("pexFormPostString 3: " + pexFormPostString);
 								}
 							}
-							logger.debug("pexFormPostString : " + pexFormPostString);
+							logger.debug("pexFormPostString 4 : " + pexFormPostString);
 							final String finalPexFormPostString = pexFormPostString;
 
 							try {
 								timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
 								logger.debug("Before PEX Updates" + timeStamp);
-								logger.debug("pexURLCreationHelp: " + pexURLCreationHelp.toString());
+
 								HttpResponse pexPostResponse = pexClient.callDestinationPOST("",
 										pexURLCreationHelp.toString(), finalPexFormPostString);
 								String pexPostResponseJsonString = EntityUtils.toString(pexPostResponse.getEntity(),
