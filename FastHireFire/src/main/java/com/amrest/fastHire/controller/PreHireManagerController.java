@@ -1526,7 +1526,9 @@ public class PreHireManagerController {
 					"?$format=json&$filter=externalCode eq '" + map.get("userId") + "'&fromDate=" + dateString);
 			entityMap.put("cust_personIdGenerate",
 					"?$format=json&$filter=externalCode eq '" + map.get("userId") + "'&fromDate=" + dateString);
-
+			// Added
+			entityMap.put("User",
+					"?$format=json&$filter=userId eq '" + map.get("userId") + "'&$select=loginMethod&$format=json");
 			// reading the records and creating batch post body
 
 			for (Map.Entry<String, String> entity : entityMap.entrySet()) {
@@ -1942,6 +1944,8 @@ public class PreHireManagerController {
 												} else if (entity.getKey().equalsIgnoreCase("PerPerson")) {
 													getresultObj.remove("perPersonUuid");
 													getresultObj.put("customString1", "Updated by Fast Hire App");
+												} else if (entity.getKey().equalsIgnoreCase("User")) {
+													getresultObj.put("loginMethod", "SSO");
 												} else {
 													getresultObj.put("startDate", map.get("startDate"));
 												}
@@ -2189,7 +2193,9 @@ public class PreHireManagerController {
 					"?$format=json&$filter=externalCode eq '" + map.get("userId") + "'&fromDate=" + dateString);
 			entityMap.put("cust_personIdGenerate",
 					"?$format=json&$filter=externalCode eq '" + map.get("userId") + "'&fromDate=" + dateString);
-
+			// Added
+			entityMap.put("User",
+					"?$format=json&$filter=userId eq '" + map.get("userId") + "'&$select=loginMethod&$format=json");
 			// reading the records and creating batch post body
 
 			for (Map.Entry<String, String> entity : entityMap.entrySet()) {
@@ -2593,6 +2599,8 @@ public class PreHireManagerController {
 													} else if (entity.getKey().equalsIgnoreCase("PerPerson")) {
 														getresultObj.remove("perPersonUuid");
 														getresultObj.put("customString1", "Updated by Fast Hire App");
+													} else if (entity.getKey().equalsIgnoreCase("User")) {
+														getresultObj.put("loginMethod", "SSO");
 													} else {
 														getresultObj.put("startDate", map.get("startDate"));
 													}

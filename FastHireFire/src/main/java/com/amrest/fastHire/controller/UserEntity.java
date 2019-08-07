@@ -151,6 +151,7 @@ public class UserEntity {
 		obj.put("email", emailValue);
 		obj.put("lastName", lastNameValue);
 		obj.put("firstName", firstNameValue);
+		obj.put("loginMethod", "PWD");
 //		obj.put("defaultLocale", defaultLanguage);
 
 		// call empJOB to get logged in user country
