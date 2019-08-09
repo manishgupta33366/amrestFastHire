@@ -9,11 +9,8 @@ import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.naming.NamingException;
-import javax.xml.bind.DatatypeConverter;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -36,7 +33,6 @@ import org.slf4j.LoggerFactory;
 
 import com.sap.core.connectivity.api.configuration.DestinationConfiguration;
 
-import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
@@ -47,12 +43,10 @@ public class PexClient {
 	private String countryid;
 	private String publicKey;
 	private String privateKey;
-	private String loggedInUser;
 
-	public void setJWTInitalization(String inUserid, String inCountryid, String loggedInUser) {
+	public void setJWTInitalization(String inUserid, String inCountryid) {
 		this.userid = inUserid;
 		this.countryid = inCountryid;
-		this.loggedInUser = loggedInUser;
 	}
 
 	public void setDestination(DestinationConfiguration destination) throws NamingException, IOException {
@@ -78,8 +72,8 @@ public class PexClient {
 		logger.debug("GEt urlString" + urlString);
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpGet request = new HttpGet(urlString);
-		request.setHeader("Authorization", getHS256JWTToken());
-		logger.debug("JWT token : " + getHS256JWTToken());
+		request.setHeader("Authorization", getJWTTokken());
+		logger.debug("JWT token : " + getJWTTokken());
 		HttpResponse response = httpClient.execute(request);
 //		String responseJson = EntityUtils.toString(response.getEntity(), "UTF-8");
 		logger.debug("responseJson" + response);
@@ -89,13 +83,7 @@ public class PexClient {
 	public HttpResponse callDestinationPOST(String path, String filter, String postJson)
 			throws URISyntaxException, ClientProtocolException, IOException {
 		String urlString = this.destination.getProperty("URL");
-		JSONObject urlCreationHelpData = new JSONObject(filter);
-
-		path = "ssfs/gccs/" + this.destination.getProperty("gcc") + "/lccs/" + urlCreationHelpData.getString("company")
-				+ "/employees/" + urlCreationHelpData.getString("userId") + "/views/"
-				+ urlCreationHelpData.getString("viewId") + "/records";
-		logger.debug("PEX post URL:" + urlString + path);
-		URL url = new URL(urlString + path);
+		URL url = new URL(urlString + path + filter);
 		URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(),
 				url.getQuery(), url.getRef());
 		urlString = uri.toASCIIString();
@@ -108,8 +96,8 @@ public class PexClient {
 		request.setEntity(entity);
 		request.setHeader("Accept", "application/json");
 		request.setHeader("Content-type", "application/json");
-		request.setHeader("Authorization", getHS256JWTToken());
-		logger.debug("JWT token : " + getHS256JWTToken());
+		request.setHeader("Authorization", getJWTTokken());
+		logger.debug("JWT token : " + getJWTTokken());
 		HttpResponse response = httpClient.execute(request);
 //		String responseJson = EntityUtils.toString(response.getEntity(), "UTF-8");
 		logger.debug("responseJson" + response);
@@ -128,63 +116,13 @@ public class PexClient {
 		return credentialDetails;
 	}
 
-	@SuppressWarnings("unchecked")
-	protected String getHS256JWTToken() {
-		// Initialize timestamp
-		long nowMillis = System.currentTimeMillis();
-		Date now = new Date(nowMillis);
-		Date exp = new Date(nowMillis + 300000);
-
-		// Generating signing key
-		String base64Key = DatatypeConverter.printBase64Binary(this.privateKey.getBytes());
-		byte[] secretBytes = DatatypeConverter.parseBase64Binary(base64Key);
-
-		// Generate Header & Claim
-		Map header = new HashMap<String, Object>();
-		header.put("typ", "JWT");
-		header.put("alg", "HS256");
-
-//		Map claims = new HashMap<String, Object>();
-//		claims.put("sub", this.publicKey);
-//		claims.put("frid", "frid-e458eea7-eeeb-4280-a878-ba96857fabc6");
-//		claims.put("gcc", this.destination.getProperty("gcc"));
-//		// claims.put("lcc", this.lcc);
-//		claims.put("employeeId", this.userid);
-//		// claims.put("email", this.email);
-//		claims.put("iat", now.getTime() / 1000);
-//		claims.put("exp", exp.getTime() / 1000);
-		String sub = this.destination.getProperty("User");
-		String gcc = this.destination.getProperty("gcc");
-		String SUCCESS_FACTOR_CLIENT_ID = this.destination.getProperty("SUCCESS_FACTOR_CLIENT_ID");
-
-		Map JPayload = new HashMap<String, Object>();
-		JPayload.put("iat", now.getTime() / 1000);
-		JPayload.put("exp", exp.getTime() / 1000);
-		JPayload.put("sub", sub);
-		JPayload.put("employeeId", this.userid);
-		JPayload.put("userId", this.loggedInUser);
-		JPayload.put("gcc", gcc);
-		JPayload.put("companyCode", this.countryid);
-
-		String JWTpayload = JPayload.toString();
-
-		// Creating token.
-		JwtBuilder builder = Jwts.builder().setHeader(header).setClaims(JPayload).signWith(SignatureAlgorithm.HS256,
-				secretBytes);
-
-		String compactJws = builder.compact();
-		return compactJws;
-	}
-
 	protected String getJWTTokken() throws IOException {
 		String newHeader = "";
 		String customerid;
 
 		// Read GCC from the URL
+		String baseUrl = this.destination.getProperty("URL");
 		String requestBaseURL = this.destination.getProperty("URL");
-		String sub = this.destination.getProperty("User");
-		String gcc = this.destination.getProperty("gcc");
-		String SUCCESS_FACTOR_CLIENT_ID = this.destination.getProperty("SUCCESS_FACTOR_CLIENT_ID");
 		requestBaseURL = requestBaseURL.replace("https://", "");
 		requestBaseURL = requestBaseURL.replace("http://", "");
 		String[] requestBaseSegment = requestBaseURL.split("/", 0);
@@ -201,23 +139,14 @@ public class PexClient {
 			Date exp = new Date(nowMillis + 300000);
 
 			// Generate payload
-			/*
-			 * JSONObject JPayload = new JSONObject(); JPayload.put("userid", this.userid);
-			 * JPayload.put("customerid", customerid); JPayload.put("countryid",
-			 * this.countryid); JPayload.put("iat", now.getTime() / 1000);
-			 * JPayload.put("exp", exp.getTime() / 1000); JPayload.put("aud", baseUrl);
-			 * JPayload.put("sub", "cleaHRsky");
-			 */
 			JSONObject JPayload = new JSONObject();
+			JPayload.put("userid", this.userid);
+			JPayload.put("customerid", customerid);
+			JPayload.put("countryid", this.countryid);
 			JPayload.put("iat", now.getTime() / 1000);
 			JPayload.put("exp", exp.getTime() / 1000);
-			JPayload.put("sub", sub);
-			JPayload.put("employeeId", this.userid);
-			JPayload.put("userId", this.loggedInUser);
-			JPayload.put("gcc", gcc);
-			JPayload.put("companyCode", this.countryid);
-			JPayload.put("SUCCESS_FACTOR_CLIENT_ID", SUCCESS_FACTOR_CLIENT_ID);
-
+			JPayload.put("aud", baseUrl);
+			JPayload.put("sub", "cleaHRsky");
 			String JWTpayload = JPayload.toString();
 
 			// Generate PKCS#8 key format from PKCS#1 key format
@@ -238,10 +167,10 @@ public class PexClient {
 			PrivateKey privateKey = privateKf.generatePrivate(privateKs);
 
 			// Generate JWT token
-			String compactJws = Jwts.builder().setHeaderParam("alg", "HS256")// .setHeaderParam("typ", "JWT")
-					.setPayload(JWTpayload)
-					// .setHeaderParam("x5c", this.publicKey)
-					.signWith(SignatureAlgorithm.HS256, privateKey).compact();
+			String compactJws = Jwts.builder().setHeaderParam("alg", "RS256")
+					// .setHeaderParam("typ", "JWT")
+					.setHeaderParam("x5c", this.publicKey).setPayload(JWTpayload)
+					.signWith(SignatureAlgorithm.RS256, privateKey).compact();
 
 			// Format header with the token
 			newHeader = "Bearer " + compactJws.toString();

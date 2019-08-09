@@ -1,7 +1,7 @@
 {
-  "id": "<viewId>",
-  "validFrom": "<validFrom>",
-  "validTo": "<validTo>",
-  "segments": "<segmentsArray>",
-  "preHireData": true
+	"personId": "<candidateId>",
+	"formId": "<formId>",
+	"countryCode": "<companyCode>",
+	"fields": "<fieldsArray>",
+	"prehireData": true
 }

@@ -1,0 +1,7 @@
+{
+  "id": "<viewId>",
+  "validFrom": "<validFrom>",
+  "validTo": "<validTo>",
+  "segments": "<segmentsArray>",
+  "preHireData": true
+}
