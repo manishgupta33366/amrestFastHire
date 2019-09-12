@@ -59,6 +59,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.amrest.fastHire.SF.BatchRequest;
 import com.amrest.fastHire.SF.DestinationClient;
 import com.amrest.fastHire.SF.PexClient;
+import com.amrest.fastHire.connections.GenerateDocConnection;
 import com.amrest.fastHire.model.CodeList;
 import com.amrest.fastHire.model.CodeListText;
 import com.amrest.fastHire.model.Contract;
@@ -104,6 +105,8 @@ public class PreHireManagerController {
 	public static final String pexDestinationName = "FastHirePEX";
 	public static final String docdestinationName = "DocumentGeneration";
 	public static final String pocDocDestinationName = "DocGeneration";
+	public static final String docGenDestinationName = "DocumentGeneration";
+
 	private Context ctx;
 	private ConnectivityConfiguration configuration;
 	private Boolean realTimePEXUpdateSuccess;
@@ -3241,7 +3244,17 @@ public class PreHireManagerController {
 		docDestination.setHeaders(docDestination.getDestProperty("Authentication"));
 
 		logger.debug("reqBodyObj" + reqBodyObj.toString());
-		HttpResponse docResponse = docDestination.callDestinationPOST("", "", reqBodyObj.toString());
+		// HttpResponse docResponse = docDestination.callDestinationPOST("", "",
+		// reqBodyObj.toString());
+		ConnectivityConfiguration configuration;
+		configuration = (ConnectivityConfiguration) ctx.lookup("java:comp/env/connectivityConfiguration");
+		DestinationConfiguration docGenDestination = configuration.getConfiguration(docGenDestinationName);
+		logger.debug("setting docGenDestination: " + docGenDestination);
+		GenerateDocConnection generateDocConnection = new GenerateDocConnection();
+		generateDocConnection.setDestination(docGenDestination);
+
+		HttpResponse docResponse = generateDocConnection.callDestinationPOST(reqBodyObj.toString());
+
 		timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
 		logger.debug("After doc generation" + timeStamp);
 
