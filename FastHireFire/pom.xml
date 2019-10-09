@@ -130,7 +130,12 @@
 		    <artifactId>olingo-odata2-api</artifactId>
 		    <version>2.0.10</version>
 		</dependency>
-		
+		<!-- https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>4.1.0</version>
+		</dependency>
 		<dependency>
 	      <groupId>org.apache.olingo</groupId>
 	      <artifactId>olingo-odata2-core</artifactId>
