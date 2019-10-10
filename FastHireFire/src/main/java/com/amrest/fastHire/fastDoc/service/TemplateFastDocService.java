@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.amrest.fastHire.fastDoc.model.Templates;
 
-public interface TemplateService {
+public interface TemplateFastDocService {
 	public Templates create(Templates item);
 
 	public Templates update(Templates item);

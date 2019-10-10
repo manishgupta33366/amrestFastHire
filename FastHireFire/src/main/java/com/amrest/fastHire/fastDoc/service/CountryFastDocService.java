@@ -5,7 +5,7 @@ import java.util.List;
 import com.amrest.fastHire.fastDoc.model.ConfigurableColumns;
 import com.amrest.fastHire.fastDoc.model.Countries;
 
-public interface CountryService {
+public interface CountryFastDocService {
 
 	public Countries create(Countries item);
 

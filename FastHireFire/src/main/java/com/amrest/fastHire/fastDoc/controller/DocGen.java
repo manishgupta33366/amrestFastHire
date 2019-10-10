@@ -65,7 +65,7 @@ import com.amrest.fastHire.fastDoc.service.MapTemplateCriteriaValuesService;
 import com.amrest.fastHire.fastDoc.service.MapTemplateFieldsService;
 import com.amrest.fastHire.fastDoc.service.RulesService;
 import com.amrest.fastHire.fastDoc.service.SFDataMappingService;
-import com.amrest.fastHire.fastDoc.service.TemplateService;
+import com.amrest.fastHire.fastDoc.service.TemplateFastDocService;
 import com.amrest.fastHire.fastDoc.service.TextService;
 import com.amrest.fastHire.fastDoc.utility.CommonFunctions;
 import com.amrest.fastHire.fastDoc.utility.CommonVariables;
@@ -99,7 +99,7 @@ public class DocGen {
 	FieldsService fieldsService;
 
 	@Autowired
-	TemplateService templateService;
+	TemplateFastDocService templateService;
 
 	@Autowired
 	EntitiesService entitiesService;

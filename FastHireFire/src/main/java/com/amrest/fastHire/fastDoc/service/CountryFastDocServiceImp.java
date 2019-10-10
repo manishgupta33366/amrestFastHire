@@ -15,7 +15,7 @@ import com.amrest.fastHire.fastDoc.model.Countries;
 
 @Transactional
 @Component
-public class CountryServiceImp implements CountryService {
+public class CountryFastDocServiceImp implements CountryFastDocService {
 
 	@PersistenceContext
 	EntityManager em;

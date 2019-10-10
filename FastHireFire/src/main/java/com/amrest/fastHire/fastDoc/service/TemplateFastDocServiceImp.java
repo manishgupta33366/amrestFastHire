@@ -13,7 +13,7 @@ import com.amrest.fastHire.fastDoc.model.Templates;
 
 @Transactional
 @Component
-public class TemplateServiceImp implements TemplateService {
+public class TemplateFastDocServiceImp implements TemplateFastDocService {
 	@PersistenceContext
 	EntityManager em;
 

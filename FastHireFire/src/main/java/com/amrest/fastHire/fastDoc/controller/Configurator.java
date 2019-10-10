@@ -38,7 +38,7 @@ import com.amrest.fastHire.fastDoc.service.CodelistTextService;
 import com.amrest.fastHire.fastDoc.service.CompaniesService;
 import com.amrest.fastHire.fastDoc.service.ConfigurableColumnsService;
 import com.amrest.fastHire.fastDoc.service.ConfigurableTablesService;
-import com.amrest.fastHire.fastDoc.service.CountryService;
+import com.amrest.fastHire.fastDoc.service.CountryFastDocService;
 import com.amrest.fastHire.fastDoc.service.EntitiesService;
 import com.amrest.fastHire.fastDoc.service.FieldsService;
 import com.amrest.fastHire.fastDoc.service.GroupsService;
@@ -50,7 +50,7 @@ import com.amrest.fastHire.fastDoc.service.MapTemplateFieldsService;
 import com.amrest.fastHire.fastDoc.service.OperatorsService;
 import com.amrest.fastHire.fastDoc.service.RulesService;
 import com.amrest.fastHire.fastDoc.service.TemplateFieldTagService;
-import com.amrest.fastHire.fastDoc.service.TemplateService;
+import com.amrest.fastHire.fastDoc.service.TemplateFastDocService;
 import com.amrest.fastHire.fastDoc.utility.WordFileProcessing;
 
 @RestController
@@ -68,7 +68,7 @@ public class Configurator {
 	FieldsService fieldsService;
 
 	@Autowired
-	TemplateService templateService;
+	TemplateFastDocService templateService;
 
 	@Autowired
 	EntitiesService entitiesService;
@@ -95,7 +95,7 @@ public class Configurator {
 	ConfigurableColumnsService configurableColumnsService;
 
 	@Autowired
-	CountryService countryService;
+	CountryFastDocService countryService;
 
 	@Autowired
 	GroupsService groupsService;

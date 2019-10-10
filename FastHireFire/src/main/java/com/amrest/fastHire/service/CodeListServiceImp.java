@@ -17,49 +17,47 @@ import com.amrest.fastHire.model.CodeList;
 public class CodeListServiceImp implements CodeListService {
 
 	@PersistenceContext
-	 EntityManager em;
-	
+	EntityManager em;
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<CodeList> findAll() {
 		Query query = em.createNamedQuery("CodeList.findAll");
-		 List<CodeList> items = query.getResultList();
-	        return items;
+		List<CodeList> items = query.getResultList();
+		return items;
 	}
 
 	@Override
 	@Transactional
 	public CodeList update(CodeList item) {
 		em.merge(item);
-	       return item;
+		return item;
 	}
 
 	@Override
 	@Transactional
 	public CodeList create(CodeList item) {
 		em.persist(item);
-	       return item;
+		return item;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<CodeList> findByFieldId(String fieldId) {
-		Query query = em.createNamedQuery("CodeList.findByFieldId")
-				.setParameter("fieldId", fieldId);
-		 List<CodeList> items = query.getResultList();
-	        return items;
+		Query query = em.createNamedQuery("CodeList.findByFieldId").setParameter("fieldId", fieldId);
+		List<CodeList> items = query.getResultList();
+		return items;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<CodeList> findByCountryField(String fieldId, String countryId) {
-		
-		Query query = em.createNamedQuery("CodeList.findByCountryField")
-				.setParameter("fieldId", fieldId)
+
+		Query query = em.createNamedQuery("CodeList.findByCountryField").setParameter("fieldId", fieldId)
 				.setParameter("countryId", countryId);
-		 List<CodeList> item = query.getResultList();
-	        return item;
-		
+		List<CodeList> item = query.getResultList();
+		return item;
+
 	}
 
 	@Override
@@ -78,19 +76,15 @@ public class CodeListServiceImp implements CodeListService {
 	@Override
 	public CodeList findByCountryFieldDependent(String fieldId, String countryId, String dependentFieldId,
 			String dependentFieldValue) {
-		try
-		{
-		Query query = em.createNamedQuery("CodeList.findByCountryFieldDependent")
-				.setParameter("fieldId", fieldId)
-				.setParameter("countryId", countryId)
-				.setParameter("dependentFieldId", dependentFieldId)
-				.setParameter("dependentFieldValue", dependentFieldValue);
-		 CodeList item = (CodeList) query.getSingleResult();
-	        return item;
+		try {
+			Query query = em.createNamedQuery("CodeList.findByCountryFieldDependent").setParameter("fieldId", fieldId)
+					.setParameter("countryId", countryId).setParameter("dependentFieldId", dependentFieldId)
+					.setParameter("dependentFieldValue", dependentFieldValue);
+			CodeList item = (CodeList) query.getSingleResult();
+			return item;
+		} catch (NoResultException e) {
+			return null;
 		}
-	        catch(NoResultException e) {
-	            return null;
-	        }
 	}
 
 }
