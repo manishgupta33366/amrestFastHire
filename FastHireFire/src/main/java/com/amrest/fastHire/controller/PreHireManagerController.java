@@ -1507,97 +1507,101 @@ public class PreHireManagerController {
 			String dateString = dateformatter.format(today);
 			Map<String, String> entityMap = new HashMap<String, String>();
 			Map<String, String> entityResponseMap = new HashMap<String, String>();
+			if (isDirectReport(loggedInUser, map.get("userId"))) { // Security check: checking if the user sending the
+																	// request is actually a manager of the Userid send
+																	// in the request
 
-			entityMap.put("EmpPayCompRecurring", "?$filter=userId eq '" + map.get("userId")
-					+ "'&$format=json&$select=userId,startDate,payComponent,paycompvalue,currencyCode,frequency,notes");
-			entityMap.put("EmpCompensation", "?$filter=userId eq '" + map.get("userId")
-					+ "'&$format=json&$select=userId,startDate,payGroup,eventReason");
-			entityMap.put("EmpEmployment", "?$filter=personIdExternal eq '" + map.get("userId")
-					+ "'&$format=json&$select=userId,startDate,personIdExternal");
-			entityMap.put("PaymentInformationV3", "?$format=json&$filter=worker eq '" + map.get("userId")
-					+ "'&$expand=toPaymentInformationDetailV3&$select=effectiveStartDate,worker,toPaymentInformationDetailV3/PaymentInformationV3_effectiveStartDate,toPaymentInformationDetailV3/PaymentInformationV3_worker,toPaymentInformationDetailV3/amount,toPaymentInformationDetailV3/accountNumber,toPaymentInformationDetailV3/bank,toPaymentInformationDetailV3/payType,toPaymentInformationDetailV3/iban,toPaymentInformationDetailV3/purpose,toPaymentInformationDetailV3/routingNumber,toPaymentInformationDetailV3/bankCountry,toPaymentInformationDetailV3/currency,toPaymentInformationDetailV3/businessIdentifierCode,toPaymentInformationDetailV3/paymentMethod,toPaymentInformationDetailV3/accountOwner");
-			entityMap.put("PerPersonal", "?$filter=personIdExternal eq '" + map.get("userId")
-					+ "'&$format=json&$select=startDate,personIdExternal,birthName,initials,customString1,maritalStatus,certificateStartDate,namePrefix,salutation,nativePreferredLang,since,gender,lastName,nameFormat,firstName,certificateEndDate,preferredName,secondNationality,formalName,nationality");
-			entityMap.put("PerAddressDEFLT", "?$filter=personIdExternal eq '" + map.get("userId")
-					+ "'&$format=json&$select=startDate,personIdExternal,addressType,address1,address2,address3,city,zipCode,country,address7,address6,address5,address4,county,address9,address8");
-			entityMap.put("EmpJob", "?$filter=userId eq '" + map.get("userId")
-					+ "'&$format=json&$expand=positionNav/companyNav,positionNav&$select=positionNav/externalName_localized,positionNav/companyNav/country,jobTitle,startDate,userId,jobCode,employmentType,workscheduleCode,division,standardHours,costCenter,payGrade,department,timeTypeProfileCode,businessUnit,managerId,position,employeeClass,countryOfCompany,location,holidayCalendarCode,company,eventReason,contractEndDate,contractType,customString1,customDate18");
-			entityMap.put("PerPerson", "?$filter=personIdExternal  eq '" + map.get("userId")
-					+ "'&$format=json&$select=personIdExternal,dateOfBirth,placeOfBirth,perPersonUuid,countryOfBirth");
-			entityMap.put("PerEmail", "?$filter=personIdExternal eq '" + map.get("userId")
-					+ "'&$format=json&$select=personIdExternal,emailAddress,isPrimary");
-			entityMap.put("cust_Additional_Information",
-					"?$format=json&$filter=externalCode eq '" + map.get("userId") + "'&fromDate=" + dateString);
-			entityMap.put("cust_personIdGenerate",
-					"?$format=json&$filter=externalCode eq '" + map.get("userId") + "'&fromDate=" + dateString);
-			// Added
-			entityMap.put("User",
-					"?$format=json&$filter=userId eq '" + map.get("userId") + "'&$select=loginMethod&$format=json");
-			// reading the records and creating batch post body
+				entityMap.put("EmpPayCompRecurring", "?$filter=userId eq '" + map.get("userId")
+						+ "'&$format=json&$select=userId,startDate,payComponent,paycompvalue,currencyCode,frequency,notes");
+				entityMap.put("EmpCompensation", "?$filter=userId eq '" + map.get("userId")
+						+ "'&$format=json&$select=userId,startDate,payGroup,eventReason");
+				entityMap.put("EmpEmployment", "?$filter=personIdExternal eq '" + map.get("userId")
+						+ "'&$format=json&$select=userId,startDate,personIdExternal");
+				entityMap.put("PaymentInformationV3", "?$format=json&$filter=worker eq '" + map.get("userId")
+						+ "'&$expand=toPaymentInformationDetailV3&$select=effectiveStartDate,worker,toPaymentInformationDetailV3/PaymentInformationV3_effectiveStartDate,toPaymentInformationDetailV3/PaymentInformationV3_worker,toPaymentInformationDetailV3/amount,toPaymentInformationDetailV3/accountNumber,toPaymentInformationDetailV3/bank,toPaymentInformationDetailV3/payType,toPaymentInformationDetailV3/iban,toPaymentInformationDetailV3/purpose,toPaymentInformationDetailV3/routingNumber,toPaymentInformationDetailV3/bankCountry,toPaymentInformationDetailV3/currency,toPaymentInformationDetailV3/businessIdentifierCode,toPaymentInformationDetailV3/paymentMethod,toPaymentInformationDetailV3/accountOwner");
+				entityMap.put("PerPersonal", "?$filter=personIdExternal eq '" + map.get("userId")
+						+ "'&$format=json&$select=startDate,personIdExternal,birthName,initials,customString1,maritalStatus,certificateStartDate,namePrefix,salutation,nativePreferredLang,since,gender,lastName,nameFormat,firstName,certificateEndDate,preferredName,secondNationality,formalName,nationality");
+				entityMap.put("PerAddressDEFLT", "?$filter=personIdExternal eq '" + map.get("userId")
+						+ "'&$format=json&$select=startDate,personIdExternal,addressType,address1,address2,address3,city,zipCode,country,address7,address6,address5,address4,county,address9,address8");
+				entityMap.put("EmpJob", "?$filter=userId eq '" + map.get("userId")
+						+ "'&$format=json&$expand=positionNav/companyNav,positionNav&$select=positionNav/externalName_localized,positionNav/companyNav/country,jobTitle,startDate,userId,jobCode,employmentType,workscheduleCode,division,standardHours,costCenter,payGrade,department,timeTypeProfileCode,businessUnit,managerId,position,employeeClass,countryOfCompany,location,holidayCalendarCode,company,eventReason,contractEndDate,contractType,customString1,customDate18");
+				entityMap.put("PerPerson", "?$filter=personIdExternal  eq '" + map.get("userId")
+						+ "'&$format=json&$select=personIdExternal,dateOfBirth,placeOfBirth,perPersonUuid,countryOfBirth");
+				entityMap.put("PerEmail", "?$filter=personIdExternal eq '" + map.get("userId")
+						+ "'&$format=json&$select=personIdExternal,emailAddress,isPrimary");
+				entityMap.put("cust_Additional_Information",
+						"?$format=json&$filter=externalCode eq '" + map.get("userId") + "'&fromDate=" + dateString);
+				entityMap.put("cust_personIdGenerate",
+						"?$format=json&$filter=externalCode eq '" + map.get("userId") + "'&fromDate=" + dateString);
+				// Added
+				entityMap.put("User",
+						"?$format=json&$filter=userId eq '" + map.get("userId") + "'&$select=loginMethod&$format=json");
+				// reading the records and creating batch post body
 
-			for (Map.Entry<String, String> entity : entityMap.entrySet()) {
-				batchRequest.createQueryPart("/" + entity.getKey() + entity.getValue(), entity.getKey());
-			}
-
-			timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-			logger.debug("Before Batch Call GET" + timeStamp);
-			// call Get Batch with all entities
-			batchRequest.callBatchPOST("/$batch", "");
-
-			timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-			logger.debug("After Batch Call GET" + timeStamp);
-
-			// creating map for other requests.
-			JSONObject sfentityObject = new JSONObject();
-			List<BatchSingleResponse> batchResponses = batchRequest.getResponses();
-			for (BatchSingleResponse batchResponse : batchResponses) {
-				// logger.debug("batch Response: " + batchResponse.getStatusCode() +
-				// ";"+batchResponse.getBody());
-
-				JSONObject batchObject = new JSONObject(batchResponse.getBody());
-				if (batchObject.getJSONObject("d").getJSONArray("results").length() != 0) {
-					batchObject = batchObject.getJSONObject("d").getJSONArray("results").getJSONObject(0);
-					String batchResponseType = batchObject.getJSONObject("__metadata").getString("type");
-					String enityKey = batchResponseType.split("\\.")[1];
-					// logger.debug("enityKey" + enityKey);
-					entityResponseMap.put(enityKey, batchResponse.getBody());
-					if (enityKey.equalsIgnoreCase("EmpJob")) {
-						batchObject.put("startDate", map.get("startDate"));
-						if (batchObject.getString("countryOfCompany") != null) {
-							SFConstants employeeClassConst = sfConstantsService
-									.findById("employeeClassId_" + batchObject.getString("countryOfCompany"));
-							batchObject.put("employeeClass", employeeClassConst.getValue());
-						}
-					}
-					sfentityObject.put(enityKey, batchObject);
+				for (Map.Entry<String, String> entity : entityMap.entrySet()) {
+					batchRequest.createQueryPart("/" + entity.getKey() + entity.getValue(), entity.getKey());
 				}
-			}
-			// creating entry for the confirm status flags update
 
-			updateMDFCompanyDepartment(destClient, map, sfentityObject.getJSONObject("EmpJob"));
-			try {
+				timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+				logger.debug("Before Batch Call GET" + timeStamp);
+				// call Get Batch with all entities
+				batchRequest.callBatchPOST("/$batch", "");
 
-				final Thread parentThread = new Thread(new Runnable() {
-					@Override
-					public void run() {
+				timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+				logger.debug("After Batch Call GET" + timeStamp);
 
-						try {
-							realTimePEXUpdateSuccess = new Boolean(false); // creating new instance of PEXUPdtae
-																			// variable
-							timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-							// Updating MDF
-							String mdfPostStatus = postPersonStatusMDF(destClient,
-									sfentityObject.getJSONObject("EmpJob").getString("userId"), "pex", "BEGIN", null);
-							logger.debug("MDF POst 1 status: " + mdfPostStatus);
+				// creating map for other requests.
+				JSONObject sfentityObject = new JSONObject();
+				List<BatchSingleResponse> batchResponses = batchRequest.getResponses();
+				for (BatchSingleResponse batchResponse : batchResponses) {
+					// logger.debug("batch Response: " + batchResponse.getStatusCode() +
+					// ";"+batchResponse.getBody());
 
-							DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+					JSONObject batchObject = new JSONObject(batchResponse.getBody());
+					if (batchObject.getJSONObject("d").getJSONArray("results").length() != 0) {
+						batchObject = batchObject.getJSONObject("d").getJSONArray("results").getJSONObject(0);
+						String batchResponseType = batchObject.getJSONObject("__metadata").getString("type");
+						String enityKey = batchResponseType.split("\\.")[1];
+						// logger.debug("enityKey" + enityKey);
+						entityResponseMap.put(enityKey, batchResponse.getBody());
+						if (enityKey.equalsIgnoreCase("EmpJob")) {
+							batchObject.put("startDate", map.get("startDate"));
+							if (batchObject.getString("countryOfCompany") != null) {
+								SFConstants employeeClassConst = sfConstantsService
+										.findById("employeeClassId_" + batchObject.getString("countryOfCompany"));
+								batchObject.put("employeeClass", employeeClassConst.getValue());
+							}
+						}
+						sfentityObject.put(enityKey, batchObject);
+					}
+				}
+				// creating entry for the confirm status flags update
 
-							// updating the SF mdf to the pex
-							JSONObject mdfFieldsObject = new JSONObject(
-									entityResponseMap.get("cust_Additional_Information"));
-							JSONObject mdfFieldsObject2 = new JSONObject(
-									entityResponseMap.get("cust_personIdGenerate"));
-							/* PEX Started */
+				updateMDFCompanyDepartment(destClient, map, sfentityObject.getJSONObject("EmpJob"));
+				try {
+
+					final Thread parentThread = new Thread(new Runnable() {
+						@Override
+						public void run() {
+
+							try {
+								realTimePEXUpdateSuccess = new Boolean(false); // creating new instance of PEXUPdtae
+																				// variable
+								timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+								// Updating MDF
+								String mdfPostStatus = postPersonStatusMDF(destClient,
+										sfentityObject.getJSONObject("EmpJob").getString("userId"), "pex", "BEGIN",
+										null);
+								logger.debug("MDF POst 1 status: " + mdfPostStatus);
+
+								DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+
+								// updating the SF mdf to the pex
+								JSONObject mdfFieldsObject = new JSONObject(
+										entityResponseMap.get("cust_Additional_Information"));
+								JSONObject mdfFieldsObject2 = new JSONObject(
+										entityResponseMap.get("cust_personIdGenerate"));
+								/* PEX Started */
 //							try {
 //								if (mdfFieldsObject.getJSONObject("d").getJSONArray("results").length() > 0) {
 //
@@ -1863,245 +1867,374 @@ public class PreHireManagerController {
 //									// logger.debug("After MDF Delete"+ timeStamp);
 //								}
 //							} 
-							try {
-								if (mdfFieldsObject.getJSONObject("d").getJSONArray("results").length() > 0) {
+								try {
+									if (mdfFieldsObject.getJSONObject("d").getJSONArray("results").length() > 0) {
 
-									mdfFieldsObject = mdfFieldsObject.getJSONObject("d").getJSONArray("results")
-											.getJSONObject(0);
-									mdfFieldsObject2 = mdfFieldsObject2.getJSONObject("d").getJSONArray("results")
-											.getJSONObject(0);
+										mdfFieldsObject = mdfFieldsObject.getJSONObject("d").getJSONArray("results")
+												.getJSONObject(0);
+										mdfFieldsObject2 = mdfFieldsObject2.getJSONObject("d").getJSONArray("results")
+												.getJSONObject(0);
 
-									// logger.debug("mdfFieldsObject" +
-									// mdfFieldsObject.toString());
+										// logger.debug("mdfFieldsObject" +
+										// mdfFieldsObject.toString());
 
-									Iterator<?> mdfFieldKeys = mdfFieldsObject.keys();
-									Map<String, ArrayList<String[]>> pexFormMap = new HashMap<String, ArrayList<String[]>>();
-									ArrayList<String[]> fieldValues;
-									while (mdfFieldKeys.hasNext()) {
-										String key = (String) mdfFieldKeys.next();
-										if (key.contains("cust_ZZ_MDF2PEX_")) {
-											String customField = mdfFieldsObject.getString(key);
-											String[] parts = customField.split("\\|\\|");
-											if (parts.length == 3) {
-												// logger.debug("pexFormMap - key :
-												// "+key+",FormId : "+parts[1]+", FieldId:
-												// "+parts[2]+", FieldName: "+parts[0]);
-												fieldValues = pexFormMap.get(parts[1]);
-												if (fieldValues == null) {
-													fieldValues = new ArrayList<String[]>();
-												}
-												fieldValues.add(new String[] { parts[2], parts[0],
-														"cust_Additional_Information" });
-												// logger.debug("pexFormMap fieldValues:
-												// "+fieldValues.get(0));
-												pexFormMap.put(parts[1], fieldValues);
-											}
-										}
-
-									}
-									mdfFieldKeys = mdfFieldsObject2.keys();
-									while (mdfFieldKeys.hasNext()) {
-										String key = (String) mdfFieldKeys.next();
-										if (key.contains("cust_ZZ_MDF2PEX_")) {
-											String customField = mdfFieldsObject2.getString(key);
-											String[] parts = customField.split("\\|\\|");
-											if (parts.length == 3) {
-												// logger.debug("pexFormMap - key :
-												// "+key+",FormId : "+parts[1]+", FieldId:
-												// "+parts[2]+", FieldName: "+parts[0]);
-												fieldValues = pexFormMap.get(parts[1]);
-												if (fieldValues == null) {
-													fieldValues = new ArrayList<String[]>();
-												}
-												fieldValues.add(
-														new String[] { parts[2], parts[0], "cust_personIdGenerate" });
-												// logger.debug("pexFormMap fieldValues:
-												// "+fieldValues.get(0));
-												pexFormMap.put(parts[1], fieldValues);
-											}
-										}
-
-									}
-
-									JSONObject empJobResponseJsonObject = new JSONObject(
-											entityResponseMap.get("EmpJob"));
-									empJobResponseJsonObject = empJobResponseJsonObject.getJSONObject("d")
-											.getJSONArray("results").getJSONObject(0);
-									// logger.debug("empJobResponseJsonObject" +
-									// empJobResponseJsonObject.toString());
-									PexClient pexClient = new PexClient();
-									logger.debug("setting pexDestination: " + pexDestination);
-									pexClient.setDestination(pexDestination);
-									pexClient.setJWTInitalization(loggedInUser,
-											empJobResponseJsonObject.getString("company"));
-									counter = 0;
-
-									for (String pexFormMapKey : pexFormMap.keySet()) {
-										logger.debug("Inside for: " + pexFormMapKey);
-										Map<String, String> pexFormJsonRepMap = new HashMap<String, String>();
-										pexFormJsonRepMap.put("candidateId", map.get("userId"));
-										pexFormJsonRepMap.put("formId", pexFormMapKey);
-										pexFormJsonRepMap.put("companyCode",
-												empJobResponseJsonObject.getString("company"));
-
-										JSONArray postFieldsArray = new JSONArray();
-										String validFromDate = map.get("startDate");
-										Calendar cal = Calendar.getInstance();
-										String milliSec = validFromDate.substring(validFromDate.indexOf("(") + 1,
-												validFromDate.indexOf(")"));
-										long milliSecLong = Long.valueOf(milliSec).longValue();
-										cal.setTimeInMillis(milliSecLong);
-										validFromDate = formatter.format(cal.getTime());
-										validFromDate = validFromDate + "T00:00:00.000Z";
-										// valid from and valid to dates.
-										JSONObject validFromPostField = new JSONObject();
-										validFromPostField.put("fieldId", "valid_from");
-										validFromPostField.put("value", validFromDate);
-										postFieldsArray.put(validFromPostField);
-
-										JSONObject validToPostField = new JSONObject();
-										validToPostField.put("fieldId", "valid_to");
-										validToPostField.put("value", "9999-12-31T00:00:00.000Z");
-										postFieldsArray.put(validToPostField);
-
-										fieldValues = pexFormMap.get(pexFormMapKey);
-										for (String[] values : fieldValues) {
-											logger.debug("post fields: " + values[0] + " : " + values[1]);
-											JSONObject postField = new JSONObject();
-											postField.put("fieldId", values[0]);
-											if (values[2].equalsIgnoreCase("cust_personIdGenerate")) {
-												logger.debug("Inside if: "
-														+ values[2].equalsIgnoreCase("cust_personIdGenerate"));
-												postField.put("value",
-														String.valueOf(mdfFieldsObject2.get(values[1]))
-																.equalsIgnoreCase("null") ? ""
-																		: mdfFieldsObject2.getString(values[1]));
-											} else {
-												logger.debug("Inside else: "
-														+ values[2].equalsIgnoreCase("cust_personIdGenerate"));
-												postField
-														.put("value",
-																String.valueOf(mdfFieldsObject.get(values[1]))
-																		.equalsIgnoreCase("null") ? ""
-																				: mdfFieldsObject.getString(values[1]));
-											}
-											postFieldsArray.put(postField);
-										}
-										pexFormJsonRepMap.put("fieldsArray", postFieldsArray.toString());
-										logger.debug("pexFormJsonRepMap" + pexFormJsonRepMap);
-										JSONObject pexFormPostObj = readJSONFile("/JSONFiles/PexForm.json");
-										String pexFormPostString = pexFormPostObj.toString();
-										logger.debug("pexFormPostString: " + pexFormPostString);
-										for (Map.Entry<String, String> entry : pexFormJsonRepMap.entrySet()) {
-											logger.debug("Inside for2: " + entry);
-											if (!entry.getKey().equalsIgnoreCase("fieldsArray")) {
-												logger.debug("Inside if2: "
-														+ entry.getKey().equalsIgnoreCase("fieldsArray"));
-												pexFormPostString = pexFormPostString
-														.replaceAll("<" + entry.getKey() + ">", entry.getValue());
-											} else {
-												logger.debug("Inside else2: "
-														+ entry.getKey().equalsIgnoreCase("fieldsArray"));
-												pexFormPostString = pexFormPostString
-														.replaceAll("\"<" + entry.getKey() + ">\"", entry.getValue());
-
-											}
-										}
-										logger.debug("pexFormPostString : " + pexFormPostString);
-										final String finalPexFormPostString = pexFormPostString;
-
-										try {
-											timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-											logger.debug("Before PEX Updates" + timeStamp);
-
-											HttpResponse pexPostResponse = pexClient.callDestinationPOST(
-													"api/v3/forms/submit", "", finalPexFormPostString);
-											String pexPostResponseJsonString = EntityUtils
-													.toString(pexPostResponse.getEntity(), "UTF-8");
-											try {
-
-												if (pexPostResponse.getStatusLine().getStatusCode() == 200) {
-													JSONObject pexResponseObject = new JSONObject(
-															pexPostResponseJsonString);
-													counter = counter + 1;
-													if (counter == pexFormMap.keySet().size()) {
-														JSONObject mdfStatus = getPersonStatusMDF(destClient,
-																sfentityObject.getJSONObject("EmpJob")
-																		.getString("userId"));
-
-														if (!(String.valueOf(mdfStatus.get("cust_IS_PEX_SUCCESS"))
-																.equalsIgnoreCase("null") ? ""
-																		: mdfStatus.getString("cust_IS_PEX_SUCCESS"))
-																				.equalsIgnoreCase("FAILED")) {
-															// Updating MDF
-															mdfPostStatus = postPersonStatusMDF(
-																	destClient, sfentityObject.getJSONObject("EmpJob")
-																			.getString("userId"),
-																	"pex", "SUCCESS", null);
-															logger.debug("MDF POst 2 status: " + mdfPostStatus);
-															realTimePEXUpdateSuccess = true;
-														}
+										Iterator<?> mdfFieldKeys = mdfFieldsObject.keys();
+										Map<String, ArrayList<String[]>> pexFormMap = new HashMap<String, ArrayList<String[]>>();
+										ArrayList<String[]> fieldValues;
+										while (mdfFieldKeys.hasNext()) {
+											String key = (String) mdfFieldKeys.next();
+											if (key.contains("cust_ZZ_MDF2PEX_")) {
+												String customField = mdfFieldsObject.getString(key);
+												String[] parts = customField.split("\\|\\|");
+												if (parts.length == 3) {
+													// logger.debug("pexFormMap - key :
+													// "+key+",FormId : "+parts[1]+", FieldId:
+													// "+parts[2]+", FieldName: "+parts[0]);
+													fieldValues = pexFormMap.get(parts[1]);
+													if (fieldValues == null) {
+														fieldValues = new ArrayList<String[]>();
 													}
+													fieldValues.add(new String[] { parts[2], parts[0],
+															"cust_Additional_Information" });
+													// logger.debug("pexFormMap fieldValues:
+													// "+fieldValues.get(0));
+													pexFormMap.put(parts[1], fieldValues);
+												}
+											}
+
+										}
+										mdfFieldKeys = mdfFieldsObject2.keys();
+										while (mdfFieldKeys.hasNext()) {
+											String key = (String) mdfFieldKeys.next();
+											if (key.contains("cust_ZZ_MDF2PEX_")) {
+												String customField = mdfFieldsObject2.getString(key);
+												String[] parts = customField.split("\\|\\|");
+												if (parts.length == 3) {
+													// logger.debug("pexFormMap - key :
+													// "+key+",FormId : "+parts[1]+", FieldId:
+													// "+parts[2]+", FieldName: "+parts[0]);
+													fieldValues = pexFormMap.get(parts[1]);
+													if (fieldValues == null) {
+														fieldValues = new ArrayList<String[]>();
+													}
+													fieldValues.add(new String[] { parts[2], parts[0],
+															"cust_personIdGenerate" });
+													// logger.debug("pexFormMap fieldValues:
+													// "+fieldValues.get(0));
+													pexFormMap.put(parts[1], fieldValues);
+												}
+											}
+
+										}
+
+										JSONObject empJobResponseJsonObject = new JSONObject(
+												entityResponseMap.get("EmpJob"));
+										empJobResponseJsonObject = empJobResponseJsonObject.getJSONObject("d")
+												.getJSONArray("results").getJSONObject(0);
+										// logger.debug("empJobResponseJsonObject" +
+										// empJobResponseJsonObject.toString());
+										PexClient pexClient = new PexClient();
+										logger.debug("setting pexDestination: " + pexDestination);
+										pexClient.setDestination(pexDestination);
+										pexClient.setJWTInitalization(loggedInUser,
+												empJobResponseJsonObject.getString("company"));
+										counter = 0;
+
+										for (String pexFormMapKey : pexFormMap.keySet()) {
+											logger.debug("Inside for: " + pexFormMapKey);
+											Map<String, String> pexFormJsonRepMap = new HashMap<String, String>();
+											pexFormJsonRepMap.put("candidateId", map.get("userId"));
+											pexFormJsonRepMap.put("formId", pexFormMapKey);
+											pexFormJsonRepMap.put("companyCode",
+													empJobResponseJsonObject.getString("company"));
+
+											JSONArray postFieldsArray = new JSONArray();
+											String validFromDate = map.get("startDate");
+											Calendar cal = Calendar.getInstance();
+											String milliSec = validFromDate.substring(validFromDate.indexOf("(") + 1,
+													validFromDate.indexOf(")"));
+											long milliSecLong = Long.valueOf(milliSec).longValue();
+											cal.setTimeInMillis(milliSecLong);
+											validFromDate = formatter.format(cal.getTime());
+											validFromDate = validFromDate + "T00:00:00.000Z";
+											// valid from and valid to dates.
+											JSONObject validFromPostField = new JSONObject();
+											validFromPostField.put("fieldId", "valid_from");
+											validFromPostField.put("value", validFromDate);
+											postFieldsArray.put(validFromPostField);
+
+											JSONObject validToPostField = new JSONObject();
+											validToPostField.put("fieldId", "valid_to");
+											validToPostField.put("value", "9999-12-31T00:00:00.000Z");
+											postFieldsArray.put(validToPostField);
+
+											fieldValues = pexFormMap.get(pexFormMapKey);
+											for (String[] values : fieldValues) {
+												logger.debug("post fields: " + values[0] + " : " + values[1]);
+												JSONObject postField = new JSONObject();
+												postField.put("fieldId", values[0]);
+												if (values[2].equalsIgnoreCase("cust_personIdGenerate")) {
+													logger.debug("Inside if: "
+															+ values[2].equalsIgnoreCase("cust_personIdGenerate"));
+													postField.put("value",
+															String.valueOf(mdfFieldsObject2.get(values[1]))
+																	.equalsIgnoreCase("null") ? ""
+																			: mdfFieldsObject2.getString(values[1]));
 												} else {
+													logger.debug("Inside else: "
+															+ values[2].equalsIgnoreCase("cust_personIdGenerate"));
+													postField.put("value",
+															String.valueOf(mdfFieldsObject.get(values[1]))
+																	.equalsIgnoreCase("null") ? ""
+																			: mdfFieldsObject.getString(values[1]));
+												}
+												postFieldsArray.put(postField);
+											}
+											pexFormJsonRepMap.put("fieldsArray", postFieldsArray.toString());
+											logger.debug("pexFormJsonRepMap" + pexFormJsonRepMap);
+											JSONObject pexFormPostObj = readJSONFile("/JSONFiles/PexForm.json");
+											String pexFormPostString = pexFormPostObj.toString();
+											logger.debug("pexFormPostString: " + pexFormPostString);
+											for (Map.Entry<String, String> entry : pexFormJsonRepMap.entrySet()) {
+												logger.debug("Inside for2: " + entry);
+												if (!entry.getKey().equalsIgnoreCase("fieldsArray")) {
+													logger.debug("Inside if2: "
+															+ entry.getKey().equalsIgnoreCase("fieldsArray"));
+													pexFormPostString = pexFormPostString
+															.replaceAll("<" + entry.getKey() + ">", entry.getValue());
+												} else {
+													logger.debug("Inside else2: "
+															+ entry.getKey().equalsIgnoreCase("fieldsArray"));
+													pexFormPostString = pexFormPostString.replaceAll(
+															"\"<" + entry.getKey() + ">\"", entry.getValue());
+
+												}
+											}
+											logger.debug("pexFormPostString : " + pexFormPostString);
+											final String finalPexFormPostString = pexFormPostString;
+
+											try {
+												timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss")
+														.format(new Date());
+												logger.debug("Before PEX Updates" + timeStamp);
+
+												HttpResponse pexPostResponse = pexClient.callDestinationPOST(
+														"api/v3/forms/submit", "", finalPexFormPostString);
+												String pexPostResponseJsonString = EntityUtils
+														.toString(pexPostResponse.getEntity(), "UTF-8");
+												try {
+
+													if (pexPostResponse.getStatusLine().getStatusCode() == 200) {
+														JSONObject pexResponseObject = new JSONObject(
+																pexPostResponseJsonString);
+														counter = counter + 1;
+														if (counter == pexFormMap.keySet().size()) {
+															JSONObject mdfStatus = getPersonStatusMDF(destClient,
+																	sfentityObject.getJSONObject("EmpJob")
+																			.getString("userId"));
+
+															if (!(String.valueOf(mdfStatus.get("cust_IS_PEX_SUCCESS"))
+																	.equalsIgnoreCase("null")
+																			? ""
+																			: mdfStatus
+																					.getString("cust_IS_PEX_SUCCESS"))
+																							.equalsIgnoreCase(
+																									"FAILED")) {
+																// Updating MDF
+																mdfPostStatus = postPersonStatusMDF(destClient,
+																		sfentityObject.getJSONObject("EmpJob")
+																				.getString("userId"),
+																		"pex", "SUCCESS", null);
+																logger.debug("MDF POst 2 status: " + mdfPostStatus);
+																realTimePEXUpdateSuccess = true;
+															}
+														}
+													} else {
+														// Updating MDF
+														mdfPostStatus = postPersonStatusMDF(destClient, sfentityObject
+																.getJSONObject("EmpJob").getString("userId"), "pex",
+																"FAILED", null);
+														logger.debug("MDF POst 3 status: " + mdfPostStatus);
+													}
+
+												} catch (JSONException ex) {
 													// Updating MDF
 													mdfPostStatus = postPersonStatusMDF(destClient,
 															sfentityObject.getJSONObject("EmpJob").getString("userId"),
 															"pex", "FAILED", null);
-													logger.debug("MDF POst 3 status: " + mdfPostStatus);
+													logger.debug("MDF POst 4 status: " + mdfPostStatus);
+													ex.printStackTrace();
+													try {
+														throw ex;
+													} catch (JSONException e1) {
+														// TODO Auto-generated catch block
+														e1.printStackTrace();
+													}
 												}
+												logger.error(
+														"pexPostResponseJsonString : " + pexPostResponseJsonString);
 
-											} catch (JSONException ex) {
+											} catch (URISyntaxException | IOException e) {
+												// TODO Auto-generated catch block
 												// Updating MDF
 												mdfPostStatus = postPersonStatusMDF(destClient,
 														sfentityObject.getJSONObject("EmpJob").getString("userId"),
 														"pex", "FAILED", null);
-												logger.debug("MDF POst 4 status: " + mdfPostStatus);
-												ex.printStackTrace();
+												logger.debug("MDF POst 5 status: " + mdfPostStatus);
+												e.printStackTrace();
 												try {
-													throw ex;
-												} catch (JSONException e1) {
+													throw e;
+												} catch (URISyntaxException | IOException e1) {
 													// TODO Auto-generated catch block
 													e1.printStackTrace();
 												}
 											}
-											logger.error("pexPostResponseJsonString : " + pexPostResponseJsonString);
 
-										} catch (URISyntaxException | IOException e) {
-											// TODO Auto-generated catch block
-											// Updating MDF
-											mdfPostStatus = postPersonStatusMDF(destClient,
-													sfentityObject.getJSONObject("EmpJob").getString("userId"), "pex",
-													"FAILED", null);
-											logger.debug("MDF POst 5 status: " + mdfPostStatus);
-											e.printStackTrace();
-											try {
-												throw e;
-											} catch (URISyntaxException | IOException e1) {
-												// TODO Auto-generated catch block
-												e1.printStackTrace();
-											}
 										}
 
+										timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+										logger.debug("After Pex Updates" + timeStamp);
+										// delete the MDF Object
+										// timeStamp = new
+										// SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new
+										// Date());
+										// logger.debug("Before MDF DELETE "+ timeStamp);
+										// destClient.callDestinationDelete(mdfFieldsObject.getJSONObject("__metadata").getString("uri"),"?$format=json");
+										// timeStamp = new
+										// SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new
+										// Date());
+										// logger.debug("After MDF Delete"+ timeStamp);
 									}
-
+								} catch (Exception e) {
+									mdfPostStatus = postPersonStatusMDF(destClient,
+											sfentityObject.getJSONObject("EmpJob").getString("userId"), "pex", "FAILED",
+											null);
+									logger.debug("MDF POst 6 status: " + mdfPostStatus);
+									e.printStackTrace();
+									try {
+										throw e;
+									} catch (Exception e1) {
+										// TODO Auto-generated catch block
+										e1.printStackTrace();
+									}
+								}
+								/* PEX Ended */
+								// updating the startDate and employeeClass to confirm the
+								// hire
+								if (realTimePEXUpdateSuccess) {// Perform SF posting only if
+																// PEX is SUCCESS
+									/* SF Started */
+									mdfPostStatus = postPersonStatusMDF(destClient,
+											sfentityObject.getJSONObject("EmpJob").getString("userId"), "sf", "BEGIN",
+											null);
+									logger.debug("MDF POst 7 status: " + mdfPostStatus);
 									timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-									logger.debug("After Pex Updates" + timeStamp);
-									// delete the MDF Object
-									// timeStamp = new
-									// SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new
-									// Date());
-									// logger.debug("Before MDF DELETE "+ timeStamp);
-									// destClient.callDestinationDelete(mdfFieldsObject.getJSONObject("__metadata").getString("uri"),"?$format=json");
-									// timeStamp = new
-									// SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new
-									// Date());
-									// logger.debug("After MDF Delete"+ timeStamp);
+									logger.debug("before SF Updates" + timeStamp);
+
+									for (Map.Entry<String, String> entity : entityMap.entrySet()) {
+
+										if (!(entity.getKey().equalsIgnoreCase("cust_Additional_Information")
+												|| entity.getKey().equalsIgnoreCase("cust_personIdGenerate"))) {
+
+											String getresponseJson = entityResponseMap.get(entity.getKey());
+											if (getresponseJson != null) {
+												JSONObject getresponseJsonObject = new JSONObject(getresponseJson);
+												// logger.debug("getresponseJson"+getresponseJson);
+												if (getresponseJsonObject.getJSONObject("d").getJSONArray("results")
+														.length() != 0) {
+													JSONObject getresultObj = getresponseJsonObject.getJSONObject("d")
+															.getJSONArray("results").getJSONObject(0);
+
+													if (entity.getKey().equalsIgnoreCase("PaymentInformationV3")) {
+														getresultObj.put("effectiveStartDate", map.get("startDate"));
+														JSONObject paymentInfoDetail = getresultObj
+																.getJSONObject("toPaymentInformationDetailV3")
+																.getJSONArray("results").getJSONObject(0);
+														paymentInfoDetail.put("PaymentInformationV3_effectiveStartDate",
+																map.get("startDate"));
+														paymentInfoDetail.put("cust_notes", "Updated by Fast Hire App");
+														getresultObj.put("toPaymentInformationDetailV3",
+																paymentInfoDetail);
+														getresultObj.put("cust_notes", "Updated by Fast Hire App");
+													} else if (entity.getKey().equalsIgnoreCase("EmpJob")) {
+														getresultObj.put("startDate", map.get("startDate"));
+														if (getresultObj.getString("countryOfCompany") != null) {
+															SFConstants employeeClassConst = sfConstantsService
+																	.findById("employeeClassId_" + getresultObj
+																			.getString("countryOfCompany"));
+															getresultObj.put("employeeClass",
+																	employeeClassConst.getValue());
+
+														}
+
+														// remove countryOfCompany due to un
+														// upsertable field
+														getresultObj.remove("countryOfCompany");
+														getresultObj.remove("jobTitle");
+														getresultObj.remove("positionNav");
+														getresultObj.put("notes", "Updated by Fast Hire App");
+													} else if (entity.getKey()
+															.equalsIgnoreCase("EmpPayCompRecurring")) {
+														getresultObj.put("startDate", map.get("startDate"));
+														getresultObj.put("notes", "Updated by Fast hire app");
+													} else if (entity.getKey().equalsIgnoreCase("EmpCompensation")) {
+														getresultObj.put("startDate", map.get("startDate"));
+														getresultObj.put("notes", "Updated by Fast hire app");
+													} else if (entity.getKey().equalsIgnoreCase("PerAddressDEFLT")) {
+														getresultObj.put("startDate", map.get("startDate"));
+														getresultObj.put("notes", "Updated by Fast hire app");
+													}
+
+													else if (entity.getKey().equalsIgnoreCase("PerPersonal")) {
+														getresultObj.put("notes", "Updated by Fast Hire App");
+														getresultObj.put("startDate", map.get("startDate"));
+													} else if (entity.getKey().equalsIgnoreCase("EmpEmployment")) {
+														getresultObj.put("notes", "Updated by Fast Hire App");
+														getresultObj.put("startDate", map.get("startDate"));
+													} else if (entity.getKey().equalsIgnoreCase("PerEmail")) {
+														getresultObj.put("customString1", "Updated by Fast Hire App");
+													} else if (entity.getKey().equalsIgnoreCase("PerPerson")) {
+														getresultObj.remove("perPersonUuid");
+														getresultObj.put("customString1", "Updated by Fast Hire App");
+													} else if (entity.getKey().equalsIgnoreCase("User")) {
+														getresultObj.put("loginMethod", "SSO");
+													} else {
+														getresultObj.put("startDate", map.get("startDate"));
+													}
+
+													String postJsonString = getresultObj.toString();
+
+													HttpResponse updateresponse = destClient.callDestinationPOST(
+															"/upsert", "?$format=json&purgeType=full", postJsonString);
+													// String entityPostResponseJsonString =
+													// EntityUtils.toString(updateresponse.getEntity(),
+													// "UTF-8");
+													if (updateresponse.getStatusLine().getStatusCode() != 200) {
+														mdfPostStatus = postPersonStatusMDF(
+																destClient, sfentityObject.getJSONObject("EmpJob")
+																		.getString("userId"),
+																"sf", "FAILED", entity.getKey());
+														logger.debug("MDF POst 8 status: " + mdfPostStatus);
+													}
+													// logger.debug(entity.getKey() + "
+													// updateresponse" + updateresponse);
+												}
+											}
+										}
+									}
+									JSONObject mdfStatus = getPersonStatusMDF(destClient,
+											sfentityObject.getJSONObject("EmpJob").getString("userId"));
+
+									if (!(String.valueOf(mdfStatus.get("cust_IS_SF_ENTITY_SUCCESS")).equalsIgnoreCase(
+											"null") ? "" : mdfStatus.getString("cust_IS_SF_ENTITY_SUCCESS"))
+													.equalsIgnoreCase("FAILED")) {
+										mdfPostStatus = postPersonStatusMDF(destClient,
+												sfentityObject.getJSONObject("EmpJob").getString("userId"), "sf",
+												"SUCCESS", null);
+										logger.debug("MDF POst 9 status: " + mdfPostStatus);
+									}
 								}
 							} catch (Exception e) {
-								mdfPostStatus = postPersonStatusMDF(destClient,
-										sfentityObject.getJSONObject("EmpJob").getString("userId"), "pex", "FAILED",
-										null);
-								logger.debug("MDF POst 6 status: " + mdfPostStatus);
 								e.printStackTrace();
 								try {
 									throw e;
@@ -2109,142 +2242,24 @@ public class PreHireManagerController {
 									// TODO Auto-generated catch block
 									e1.printStackTrace();
 								}
+								e.printStackTrace();
 							}
-							/* PEX Ended */
-							// updating the startDate and employeeClass to confirm the
-							// hire
-							if (realTimePEXUpdateSuccess) {// Perform SF posting only if
-															// PEX is SUCCESS
-								/* SF Started */
-								mdfPostStatus = postPersonStatusMDF(destClient,
-										sfentityObject.getJSONObject("EmpJob").getString("userId"), "sf", "BEGIN",
-										null);
-								logger.debug("MDF POst 7 status: " + mdfPostStatus);
-								timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-								logger.debug("before SF Updates" + timeStamp);
 
-								for (Map.Entry<String, String> entity : entityMap.entrySet()) {
-
-									if (!(entity.getKey().equalsIgnoreCase("cust_Additional_Information")
-											|| entity.getKey().equalsIgnoreCase("cust_personIdGenerate"))) {
-
-										String getresponseJson = entityResponseMap.get(entity.getKey());
-										if (getresponseJson != null) {
-											JSONObject getresponseJsonObject = new JSONObject(getresponseJson);
-											// logger.debug("getresponseJson"+getresponseJson);
-											if (getresponseJsonObject.getJSONObject("d").getJSONArray("results")
-													.length() != 0) {
-												JSONObject getresultObj = getresponseJsonObject.getJSONObject("d")
-														.getJSONArray("results").getJSONObject(0);
-
-												if (entity.getKey().equalsIgnoreCase("PaymentInformationV3")) {
-													getresultObj.put("effectiveStartDate", map.get("startDate"));
-													JSONObject paymentInfoDetail = getresultObj
-															.getJSONObject("toPaymentInformationDetailV3")
-															.getJSONArray("results").getJSONObject(0);
-													paymentInfoDetail.put("PaymentInformationV3_effectiveStartDate",
-															map.get("startDate"));
-													paymentInfoDetail.put("cust_notes", "Updated by Fast Hire App");
-													getresultObj.put("toPaymentInformationDetailV3", paymentInfoDetail);
-													getresultObj.put("cust_notes", "Updated by Fast Hire App");
-												} else if (entity.getKey().equalsIgnoreCase("EmpJob")) {
-													getresultObj.put("startDate", map.get("startDate"));
-													if (getresultObj.getString("countryOfCompany") != null) {
-														SFConstants employeeClassConst = sfConstantsService
-																.findById("employeeClassId_"
-																		+ getresultObj.getString("countryOfCompany"));
-														getresultObj.put("employeeClass",
-																employeeClassConst.getValue());
-
-													}
-
-													// remove countryOfCompany due to un
-													// upsertable field
-													getresultObj.remove("countryOfCompany");
-													getresultObj.remove("jobTitle");
-													getresultObj.remove("positionNav");
-													getresultObj.put("notes", "Updated by Fast Hire App");
-												} else if (entity.getKey().equalsIgnoreCase("EmpPayCompRecurring")) {
-													getresultObj.put("startDate", map.get("startDate"));
-													getresultObj.put("notes", "Updated by Fast hire app");
-												} else if (entity.getKey().equalsIgnoreCase("EmpCompensation")) {
-													getresultObj.put("startDate", map.get("startDate"));
-													getresultObj.put("notes", "Updated by Fast hire app");
-												} else if (entity.getKey().equalsIgnoreCase("PerAddressDEFLT")) {
-													getresultObj.put("startDate", map.get("startDate"));
-													getresultObj.put("notes", "Updated by Fast hire app");
-												}
-
-												else if (entity.getKey().equalsIgnoreCase("PerPersonal")) {
-													getresultObj.put("notes", "Updated by Fast Hire App");
-													getresultObj.put("startDate", map.get("startDate"));
-												} else if (entity.getKey().equalsIgnoreCase("EmpEmployment")) {
-													getresultObj.put("notes", "Updated by Fast Hire App");
-													getresultObj.put("startDate", map.get("startDate"));
-												} else if (entity.getKey().equalsIgnoreCase("PerEmail")) {
-													getresultObj.put("customString1", "Updated by Fast Hire App");
-												} else if (entity.getKey().equalsIgnoreCase("PerPerson")) {
-													getresultObj.remove("perPersonUuid");
-													getresultObj.put("customString1", "Updated by Fast Hire App");
-												} else if (entity.getKey().equalsIgnoreCase("User")) {
-													getresultObj.put("loginMethod", "SSO");
-												} else {
-													getresultObj.put("startDate", map.get("startDate"));
-												}
-
-												String postJsonString = getresultObj.toString();
-
-												HttpResponse updateresponse = destClient.callDestinationPOST("/upsert",
-														"?$format=json&purgeType=full", postJsonString);
-												// String entityPostResponseJsonString =
-												// EntityUtils.toString(updateresponse.getEntity(),
-												// "UTF-8");
-												if (updateresponse.getStatusLine().getStatusCode() != 200) {
-													mdfPostStatus = postPersonStatusMDF(destClient,
-															sfentityObject.getJSONObject("EmpJob").getString("userId"),
-															"sf", "FAILED", entity.getKey());
-													logger.debug("MDF POst 8 status: " + mdfPostStatus);
-												}
-												// logger.debug(entity.getKey() + "
-												// updateresponse" + updateresponse);
-											}
-										}
-									}
-								}
-								JSONObject mdfStatus = getPersonStatusMDF(destClient,
-										sfentityObject.getJSONObject("EmpJob").getString("userId"));
-
-								if (!(String.valueOf(mdfStatus.get("cust_IS_SF_ENTITY_SUCCESS")).equalsIgnoreCase(
-										"null") ? "" : mdfStatus.getString("cust_IS_SF_ENTITY_SUCCESS"))
-												.equalsIgnoreCase("FAILED")) {
-									mdfPostStatus = postPersonStatusMDF(destClient,
-											sfentityObject.getJSONObject("EmpJob").getString("userId"), "sf", "SUCCESS",
-											null);
-									logger.debug("MDF POst 9 status: " + mdfPostStatus);
-								}
-							}
-						} catch (Exception e) {
-							e.printStackTrace();
-							try {
-								throw e;
-							} catch (Exception e1) {
-								// TODO Auto-generated catch block
-								e1.printStackTrace();
-							}
-							e.printStackTrace();
 						}
+					});
 
-					}
-				});
+					parentThread.start();
 
-				parentThread.start();
-
-				return ResponseEntity.ok().body("Success");
-			} catch (Exception e) {
-				e.printStackTrace();
-				return new ResponseEntity<>("Error: " + e.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
+					return ResponseEntity.ok().body("Success");
+				} catch (Exception e) {
+					e.printStackTrace();
+					return new ResponseEntity<>("Error: " + e.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
+				}
 			}
-
+			logger.debug("Access Error: user: " + loggedInUser
+					+ "tried confirming a position which is not its Direct report!");
+			return new ResponseEntity<>("Error: You are not authorized to confirm this user! This event has be logged!",
+					HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		logger.debug("Error: StartDate is less then 3 days!");
 		return new ResponseEntity<>("Error: StartDate is less then 3 days!", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -3767,6 +3782,43 @@ public class PreHireManagerController {
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTimeInMillis(milliSeconds);
 		return (formatter.format(calendar.getTime()));
+	}
+
+	private Boolean isDirectReport(String loggedInUser, String userId)
+			throws ClientProtocolException, IOException, URISyntaxException, NamingException {
+		DestinationClient destClient = new DestinationClient();
+		destClient.setDestName(destinationName);
+		destClient.setHeaderProvider();
+		destClient.setConfiguration();
+		destClient.setDestConfiguration();
+		destClient.setHeaders(destClient.getDestProperty("Authentication"));
+
+		// call to get local language of the logged in user
+		HttpResponse userResponse = destClient.callDestinationGET("/User", "?$filter=userId eq '" + loggedInUser
+				+ "'&$format=json&$expand=directReports/empInfo/userNav/directReports&$select=directReports/userId,directReports/empInfo/userNav/directReports/userId");
+		String userResponseJsonString = EntityUtils.toString(userResponse.getEntity(), "UTF-8");
+		JSONObject directReportResponseObject = new JSONObject(userResponseJsonString);
+		directReportResponseObject = directReportResponseObject.getJSONObject("d").getJSONArray("results")
+				.getJSONObject(0).getJSONObject("directReports");
+		JSONArray directReportsArray = directReportResponseObject.getJSONArray("results");
+		JSONObject tempObj;
+		JSONArray tempJsonArray2LevelDR;
+		for (int i = 0; i < directReportsArray.length(); i++) {
+			tempObj = directReportsArray.getJSONObject(i);
+			if (tempObj.getString("userId").equals(userId)) {
+				return true;
+			}
+			tempJsonArray2LevelDR = tempObj.getJSONObject("empInfo").getJSONObject("userNav")
+					.getJSONObject("directReports").getJSONArray("results");
+
+			for (int j = 0; j < tempJsonArray2LevelDR.length(); j++) {
+				tempObj = directReportsArray.getJSONObject(i);
+				if (tempObj.getString("userId").equals(userId)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 }
