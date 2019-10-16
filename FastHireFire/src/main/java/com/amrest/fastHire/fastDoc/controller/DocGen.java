@@ -233,7 +233,7 @@ public class DocGen {
 
 	@GetMapping(value = "/docGenAdmin/searchUser")
 	public ResponseEntity<?> searchUser(@RequestParam(name = "searchString", required = false) String searchString,
-			HttpServletRequest request)
+			@RequestParam(name = "inactive", required = false) String inactive, HttpServletRequest request)
 			throws ClientProtocolException, IOException, URISyntaxException, NamingException {
 		try {
 
@@ -256,22 +256,54 @@ public class DocGen {
 			}
 
 			HttpResponse searchResponse;
-			String searchResponseJsonString;
 			JSONObject searchResponseResponseObject;
+			JSONObject jsonObjectActiveUsers;
+			JSONObject jsonObjectInActiveUsers = new JSONObject();
+			String seprater = "-";
+			SimpleDateFormat sdf_MMDDYYY = new SimpleDateFormat("dd" + seprater + "MM" + seprater + "yyyy");
+			Calendar cal = Calendar.getInstance();
+			cal.add(Calendar.MONTH, -1);
+			Date prevMonth = cal.getTime();
+			String prevMonthDate = sdf_MMDDYYY.format(prevMonth);
+			String currentDate = sdf_MMDDYYY.format(new Date());
 			if (searchString == null) {
+
 				searchResponse = CommonFunctions.getDestinationCLient(CommonVariables.sfDestination).callDestinationGET(
 						"/User",
 						"?$format=json&$select=userId,firstName,lastName&$filter=firstName ne null and lastName ne null");
+				jsonObjectActiveUsers = new JSONObject(EntityUtils.toString(searchResponse.getEntity(), "UTF-8"));
+				if (inactive != null) { // get Incative users also
+					searchResponse = CommonFunctions.getDestinationCLient(CommonVariables.sfDestination)
+							.callDestinationGET("/User",
+									"?$filter=firstName ne null and lastName ne null and status eq 'f'&fromDate="
+											+ prevMonthDate + "&toDate=" + currentDate
+											+ "&$format=json&$select=userId,firstName,lastName");
+					jsonObjectInActiveUsers = new JSONObject(EntityUtils.toString(searchResponse.getEntity(), "UTF-8"));
+				}
+
 			} else {
 				searchString = searchString.toLowerCase();
 				String url = "?$format=json&$select=userId,firstName,lastName&$filter=substringof('<inputParameter>',tolower(firstName)) or substringof('<inputParameter>',tolower(lastName)) or substringof('<inputParameter>',tolower(userId))";
 				url = url.replace("<inputParameter>", searchString);
 				searchResponse = CommonFunctions.getDestinationCLient(CommonVariables.sfDestination)
 						.callDestinationGET("/User", url);
+				jsonObjectActiveUsers = new JSONObject(EntityUtils.toString(searchResponse.getEntity(), "UTF-8"));
+				if (inactive != null) { // get Incative users also
+					searchString = searchString.toLowerCase();
+					url = "?$format=json&$select=userId,firstName,lastName&$filter=(substringof('<inputParameter>',tolower(firstName)) or substringof('<inputParameter>',tolower(lastName)) or substringof('<inputParameter>',tolower(userId))) and status eq 'f'&fromDate="
+							+ prevMonthDate + "&toDate=" + currentDate;
+					url = url.replace("<inputParameter>", searchString);
+					searchResponse = CommonFunctions.getDestinationCLient(CommonVariables.sfDestination)
+							.callDestinationGET("/User", url);
+					jsonObjectInActiveUsers = new JSONObject(EntityUtils.toString(searchResponse.getEntity(), "UTF-8"));
+				}
 			}
-			searchResponseJsonString = EntityUtils.toString(searchResponse.getEntity(), "UTF-8");
-			searchResponseResponseObject = new JSONObject(searchResponseJsonString);
-			return ResponseEntity.ok().body(searchResponseResponseObject.getJSONObject("d").toString());
+
+			searchResponseResponseObject = new JSONObject();
+			searchResponseResponseObject.put("activeUsers", jsonObjectActiveUsers.getJSONObject("d"));
+			searchResponseResponseObject.put("inAcactiveUsers",
+					jsonObjectInActiveUsers.has("d") ? jsonObjectInActiveUsers.getJSONObject("d") : "");
+			return ResponseEntity.ok().body(searchResponseResponseObject.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
