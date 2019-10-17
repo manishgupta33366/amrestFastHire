@@ -982,7 +982,7 @@ public class DocGen {
 			return (cal.get(Calendar.YEAR) + seprator1 + hunLocale.values()[cal.get(Calendar.MONTH)] + seprator2
 					+ cal.get(Calendar.DAY_OF_MONTH));
 
-		case "DE":
+		case "DEU":
 			locale = new Locale(language); // as for DE required format is DD.MM.YYYY and our default is MMMM dd, yyyy
 			date = new Date(dateToFormat);
 			sdf = new SimpleDateFormat("dd" + seprator1 + "MM" + seprator2 + "yyyy", locale);
@@ -1251,7 +1251,7 @@ public class DocGen {
 			cal.setTime(date);
 			return (cal.get(Calendar.YEAR) + seprator1 + hunLocale.values()[cal.get(Calendar.MONTH)] + seprator2
 					+ cal.get(Calendar.DAY_OF_MONTH));
-		case "DE":
+		case "DEU":
 			locale = new Locale(language); // as for DE required format is DD.MM.YYYY and our default is MMMM dd, yyyy
 			date = new Date(Long.parseLong(dateToFormat));
 			sdf = new SimpleDateFormat("dd" + seprator1 + "MM" + seprator2 + "yyyy", locale);
@@ -1323,7 +1323,7 @@ public class DocGen {
 			return (Integer.parseInt(sdf_YYYY.format(date))
 					+ Integer.parseInt(getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport, null))
 					+ seprator1 + hunLocale.values()[11] + seprator2 + 31);
-		case "DE": // as for DE required format is DD.MM.YYYY and our default is MMMM dd, yyyy
+		case "DEU": // as for DE required format is DD.MM.YYYY and our default is MMMM dd, yyyy
 			locale = new Locale(language);
 			sdf_MMDD = new SimpleDateFormat("dd" + seprator1 + "MM", locale);
 			return (sdf_MMDD.format(decMonth) + seprator2 + (Integer.parseInt(sdf_YYYY.format(date))
