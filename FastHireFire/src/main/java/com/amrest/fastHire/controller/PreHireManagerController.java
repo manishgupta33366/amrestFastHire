@@ -3185,7 +3185,7 @@ public class PreHireManagerController {
 	public HttpResponse generateDoc(String reqString)
 			throws NamingException, IOException, URISyntaxException, NoSuchMethodException, SecurityException,
 			IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-
+		ctx = new InitialContext();
 		logger.debug("Doc Genetration: reqString" + reqString);
 
 		JSONObject reqObject = new JSONObject(reqString);

@@ -190,11 +190,15 @@ public class DocGen {
 	}
 
 	@GetMapping(value = "/executeRule")
-	public ResponseEntity<?> executeRule(@RequestParam(name = "ruleID") String ruleID, HttpServletRequest request) {
+	public ResponseEntity<?> executeRule(@RequestParam(name = "ruleID") String ruleID, HttpServletRequest request,
+			@RequestParam(name = "fromDate") String fromDate) {
 
 		try {
 			HttpSession session = request.getSession(false);// false is not create new session and use the existing
 															// session
+			JSONObject requestData = new JSONObject();
+			requestData.put("fromDate", fromDate);
+			session.setAttribute("requestData", requestData);
 			return session.getAttribute("loginStatus") != null
 					? ResponseEntity.ok().body(getRuleData(ruleID, session, false).toString()) // forDirectReport false
 					: new ResponseEntity<>("Session timeout! Please Login again!", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -1974,8 +1978,8 @@ public class DocGen {
 																													// Call
 																													// to
 																													// map
-		logger.debug("Generated URL: " + entity.getName(),
-				filter + "&$format=json&$expand=" + expandPath + "&$select=" + selectPath);
+		logger.debug("Generated URL: " + entity.getName() + filter + "&$format=json&$expand=" + expandPath + "&$select="
+				+ selectPath);
 
 		// adding request to Batch
 		for (Map.Entry<String, String> entityM : entityMap.entrySet()) {
