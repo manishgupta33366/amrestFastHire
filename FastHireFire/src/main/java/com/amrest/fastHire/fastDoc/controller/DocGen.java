@@ -1934,20 +1934,48 @@ public class DocGen {
 		expandPath = expandPath.length() > 0 ? expandPath.substring(0, expandPath.length() - 1) : "";
 		logger.debug("Generated expand path: " + expandPath + "...for entity: " + entityName);
 		logger.debug("Generated select path: " + selectPath + "...for entity: " + entityName);
+		String filter = entity.getFilter();
+		String seprater = "-";
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy" + seprater + "MM" + seprater + "dd");
+		String currentFormatedDate = simpleDateFormat.format(new Date());
+		JSONObject requestData = session.getAttribute("requestData") != null
+				? new JSONObject((String) session.getAttribute("requestData"))
+				: null;
 
-		if (!forDirectReport)
-			entityMap.put(entity.getName(), "?$filter=" + entity.getFilter() + " eq '" + loggedInUser
-					+ "'&$format=json&$expand=" + expandPath + "&$select=" + selectPath);
-		else {
+		if (!forDirectReport)// if called for self
+		{
+			if (requestData != null) {// if no data is send from UI means, its a GET call
+				if (requestData.has("fromDate")) { // checking if data need to be fetched from a specific date
+					filter = filter.replace("<fromDate>", requestData.getString("fromDate"));
+					filter = filter.replace("<toDate>", currentFormatedDate);
+				} else {// set start and to dates to currentDate
+					filter = filter.replace("<fromDate>", currentFormatedDate);
+					filter = filter.replace("<toDate>", currentFormatedDate);
+				}
+			} else {// set start and to dates to currentDate
+				filter = filter.replace("<fromDate>", currentFormatedDate);
+				filter = filter.replace("<toDate>", currentFormatedDate);
+			}
+
+			filter = filter.replace("<userId>", loggedInUser);
+
+		} else {
 			// Else retrieve data for direct report
-			JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
-			directReportUserID = requestData.getString("userID");
-			entityMap.put(entity.getName(), "?$filter=" + entity.getFilter() + " eq '" + directReportUserID
-					+ "'&$format=json&$expand=" + expandPath + "&$select=" + selectPath);
+			if (requestData.has("fromDate")) { // checking if data need to be fetched from a specific date
+				filter = filter.replace("<fromDate>", requestData.getString("fromDate"));
+				filter = filter.replace("<toDate>", currentFormatedDate);
+			} else {// set start and to dates to currentDate
+				filter = filter.replace("<fromDate>", currentFormatedDate);
+				filter = filter.replace("<toDate>", currentFormatedDate);
+			}
+			filter = filter.replace("<userId>", requestData.getString("userID"));// userId sent from UI
 		}
-
-		logger.debug("Generated URL: " + entity.getName() + "/" + "?$filter=" + entity.getFilter() + " eq '"
-				+ loggedInUser + "'&$format=json&$expand=" + expandPath + "&$select=" + selectPath);
+		entityMap.put(entity.getName(), filter + "&$format=json&$expand=" + expandPath + "&$select=" + selectPath); // adding
+																													// Call
+																													// to
+																													// map
+		logger.debug("Generated URL: " + entity.getName(),
+				filter + "&$format=json&$expand=" + expandPath + "&$select=" + selectPath);
 
 		// adding request to Batch
 		for (Map.Entry<String, String> entityM : entityMap.entrySet()) {
