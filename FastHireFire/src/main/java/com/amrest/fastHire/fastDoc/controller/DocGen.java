@@ -198,7 +198,7 @@ public class DocGen {
 															// session
 			JSONObject requestData = new JSONObject();
 			requestData.put("fromDate", fromDate);
-			session.setAttribute("requestData", requestData);
+			session.setAttribute("requestData", requestData.toString());
 			return session.getAttribute("loginStatus") != null
 					? ResponseEntity.ok().body(getRuleData(ruleID, session, false).toString()) // forDirectReport false
 					: new ResponseEntity<>("Session timeout! Please Login again!", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -263,8 +263,7 @@ public class DocGen {
 			JSONObject searchResponseResponseObject;
 			JSONObject jsonObjectActiveUsers;
 			JSONObject jsonObjectInActiveUsers = new JSONObject();
-			String seprater = "-";
-			SimpleDateFormat sdf_MMDDYYY = new SimpleDateFormat("dd" + seprater + "MM" + seprater + "yyyy");
+			SimpleDateFormat sdf_MMDDYYY = new SimpleDateFormat("yyyy-MM-dd'T'00:00:00.00");
 			Calendar cal = Calendar.getInstance();
 			cal.add(Calendar.MONTH, -1);
 			Date prevMonth = cal.getTime();
@@ -279,9 +278,10 @@ public class DocGen {
 				if (inactive != null) { // get Incative users also
 					searchResponse = CommonFunctions.getDestinationCLient(CommonVariables.sfDestination)
 							.callDestinationGET("/User",
-									"?$filter=firstName ne null and lastName ne null and status eq 'f'&fromDate="
-											+ prevMonthDate + "&toDate=" + currentDate
-											+ "&$format=json&$select=userId,firstName,lastName");
+									"?$format=json&$expand=empInfo&$select=userId,firstName,lastName&$filter=status eq 'f' and empInfo/startDate ge datetime'"
+											+ prevMonthDate + "' and empInfo/startDate le datetime'" + currentDate
+											+ "'");
+
 					jsonObjectInActiveUsers = new JSONObject(EntityUtils.toString(searchResponse.getEntity(), "UTF-8"));
 				}
 
@@ -294,8 +294,9 @@ public class DocGen {
 				jsonObjectActiveUsers = new JSONObject(EntityUtils.toString(searchResponse.getEntity(), "UTF-8"));
 				if (inactive != null) { // get Incative users also
 					searchString = searchString.toLowerCase();
-					url = "?$format=json&$select=userId,firstName,lastName&$filter=(substringof('<inputParameter>',tolower(firstName)) or substringof('<inputParameter>',tolower(lastName)) or substringof('<inputParameter>',tolower(userId))) and status eq 'f'&fromDate="
-							+ prevMonthDate + "&toDate=" + currentDate;
+					url = "?$format=json&$select=userId,firstName,lastName&$filter=(substringof('<inputParameter>',tolower(firstName)) or substringof('<inputParameter>',tolower(lastName)) or substringof('<inputParameter>',tolower(userId))) and status eq 'f' and empInfo/startDate ge datetime'"
+							+ prevMonthDate + "' and empInfo/startDate le datetime'" + currentDate + "'";
+
 					url = url.replace("<inputParameter>", searchString);
 					searchResponse = CommonFunctions.getDestinationCLient(CommonVariables.sfDestination)
 							.callDestinationGET("/User", url);
@@ -1942,36 +1943,47 @@ public class DocGen {
 		String seprater = "-";
 		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy" + seprater + "MM" + seprater + "dd");
 		String currentFormatedDate = simpleDateFormat.format(new Date());
+		String fromDate = "";
 		JSONObject requestData = session.getAttribute("requestData") != null
 				? new JSONObject((String) session.getAttribute("requestData"))
 				: null;
+		Date fromDateUnFormated = null;
+		Date currentDateUnFormated = null;
+
+		if (requestData != null) { // setting filters
+			if (requestData.has("fromDate")) { // checking if data need to be fetched from a specific date
+				fromDate = requestData.getString("fromDate"); // fromDate passed from UI
+
+				try {
+					fromDateUnFormated = simpleDateFormat.parse(fromDate);
+					currentDateUnFormated = simpleDateFormat.parse(currentFormatedDate);
+				} catch (java.text.ParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+				filter = filter.replace("<fromDate>", fromDate);
+				if (fromDateUnFormated.after(currentDateUnFormated)) // if fromDate is greater than current date
+																		// (means future date) then set toDate to
+																		// fromDate (means both dates will be future
+																		// dated)
+					filter = filter.replace("<toDate>", fromDate);
+				else
+					filter = filter.replace("<toDate>", currentFormatedDate);
+			} else {// set start and to dates to currentDate
+				filter = filter.replace("<fromDate>", currentFormatedDate);
+				filter = filter.replace("<toDate>", currentFormatedDate);
+			}
+		} else {// set start and to dates to currentDate
+			filter = filter.replace("<fromDate>", currentFormatedDate);
+			filter = filter.replace("<toDate>", currentFormatedDate);
+		}
 
 		if (!forDirectReport)// if called for self
 		{
-			if (requestData != null) {// if no data is send from UI means, its a GET call
-				if (requestData.has("fromDate")) { // checking if data need to be fetched from a specific date
-					filter = filter.replace("<fromDate>", requestData.getString("fromDate"));
-					filter = filter.replace("<toDate>", currentFormatedDate);
-				} else {// set start and to dates to currentDate
-					filter = filter.replace("<fromDate>", currentFormatedDate);
-					filter = filter.replace("<toDate>", currentFormatedDate);
-				}
-			} else {// set start and to dates to currentDate
-				filter = filter.replace("<fromDate>", currentFormatedDate);
-				filter = filter.replace("<toDate>", currentFormatedDate);
-			}
-
 			filter = filter.replace("<userId>", loggedInUser);
-
 		} else {
 			// Else retrieve data for direct report
-			if (requestData.has("fromDate")) { // checking if data need to be fetched from a specific date
-				filter = filter.replace("<fromDate>", requestData.getString("fromDate"));
-				filter = filter.replace("<toDate>", currentFormatedDate);
-			} else {// set start and to dates to currentDate
-				filter = filter.replace("<fromDate>", currentFormatedDate);
-				filter = filter.replace("<toDate>", currentFormatedDate);
-			}
 			filter = filter.replace("<userId>", requestData.getString("userID"));// userId sent from UI
 		}
 		entityMap.put(entity.getName(), filter + "&$format=json&$expand=" + expandPath + "&$select=" + selectPath); // adding
