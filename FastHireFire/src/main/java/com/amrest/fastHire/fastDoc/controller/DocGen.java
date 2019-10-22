@@ -191,13 +191,14 @@ public class DocGen {
 
 	@GetMapping(value = "/executeRule")
 	public ResponseEntity<?> executeRule(@RequestParam(name = "ruleID") String ruleID, HttpServletRequest request,
-			@RequestParam(name = "fromDate") String fromDate) {
+			@RequestParam(name = "fromDate") String fromDate, @RequestParam(name = "inactive") String inactive) {
 
 		try {
 			HttpSession session = request.getSession(false);// false is not create new session and use the existing
 															// session
 			JSONObject requestData = new JSONObject();
 			requestData.put("fromDate", fromDate);
+			requestData.put("inactive", inactive);
 			session.setAttribute("requestData", requestData.toString());
 			return session.getAttribute("loginStatus") != null
 					? ResponseEntity.ok().body(getRuleData(ruleID, session, false).toString()) // forDirectReport false
@@ -1970,13 +1971,23 @@ public class DocGen {
 					filter = filter.replace("<toDate>", fromDate);
 				else
 					filter = filter.replace("<toDate>", currentFormatedDate);
-			} else {// set start and to dates to currentDate
+			} else {// set start and toDate to currentDate
 				filter = filter.replace("<fromDate>", currentFormatedDate);
 				filter = filter.replace("<toDate>", currentFormatedDate);
 			}
+			Boolean inactiveStatus = requestData.has("inactive")
+					? Boolean.parseBoolean(requestData.getString("inactive"))
+					: false;
+			if (inactiveStatus)// if inactive status from UI is true then
+				// add status in the filter
+				filter = filter.replace("<status>", " and status in 't','f'");
+			else// remove status from the filter
+				filter = filter.replace("<status>", "");
+
 		} else {// set start and to dates to currentDate
 			filter = filter.replace("<fromDate>", currentFormatedDate);
 			filter = filter.replace("<toDate>", currentFormatedDate);
+			filter = filter.replace("<status>", "");
 		}
 
 		if (!forDirectReport)// if called for self
