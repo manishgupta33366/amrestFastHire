@@ -41,9 +41,20 @@ public class TemplateFieldTag {
 	@Column(name = "\"TYPE\"", columnDefinition = "VARCHAR(32)")
 	private String type;
 
+	@Column(name = "\"DATA_TYPE\"", columnDefinition = "VARCHAR(32)")
+	private String dataType;
+
 	@ManyToOne(cascade = CascadeType.ALL)
 	@JoinColumn(name = "\"FIELD.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
 	private Fields field;
+
+	public String getDataType() {
+		return dataType;
+	}
+
+	public void setDataType(String dataType) {
+		this.dataType = dataType;
+	}
 
 	public String getType() {
 		return type;

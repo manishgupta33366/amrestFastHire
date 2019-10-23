@@ -2266,11 +2266,12 @@ public class PreHireManagerController {
 	}
 
 	@GetMapping(value = "/DocDownload/{personId}")
-	public ResponseEntity<?> downloadDocument(@PathVariable("personId") String personId)
+	public ResponseEntity<?> downloadDocument(@PathVariable("personId") String personId, HttpServletRequest request)
 			throws NamingException, ClientProtocolException, IOException, URISyntaxException, BatchException,
 			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException {
 
+		String loggedInUser = request.getUserPrincipal().getName();
 		Map<String, String> map = new HashMap<String, String>();
 		map.put("userId", personId);
 
@@ -2347,7 +2348,7 @@ public class PreHireManagerController {
 				}
 			}
 
-			HttpResponse response = generateDoc(docGenerationObject.toString());
+			HttpResponse response = generateDoc(docGenerationObject.toString(), loggedInUser);
 			String msg = response.getAllHeaders()[0].getValue();
 			if (response != null && !msg.equals("NoTemplateFound")) {
 				if (response.getStatusLine().getStatusCode() == 200) {
@@ -3182,7 +3183,7 @@ public class PreHireManagerController {
 		return jsonObject;
 	}
 
-	public HttpResponse generateDoc(String reqString)
+	public HttpResponse generateDoc(String reqString, String loggedInUser)
 			throws NamingException, IOException, URISyntaxException, NoSuchMethodException, SecurityException,
 			IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		ctx = new InitialContext();
@@ -3235,14 +3236,18 @@ public class PreHireManagerController {
 			// reqBodyObj.put("TemplateName", "AmRest Kávézó Kft_40H");
 		}
 
-		// reqBodyObj.put("CompanyCode", company);
-		reqBodyObj.put("CompanyCode", "");
+		reqBodyObj.put("CompanyCode", company);
+		// reqBodyObj.put("CompanyCode", "");
 		reqBodyObj.put("Gcc", "AMR");
-		reqBodyObj.put("HrisId", reqObject.getJSONObject("PerPerson").getString("personIdExternal"));
 		reqBodyObj.put("OutputType", "pdf");
-		reqBodyObj.put("Email", reqObject.getJSONObject("PerEmail").getString("emailAddress"));
 		reqBodyObj.put("OutputFileName", "Contract.pdf");
 		reqBodyObj.put("FileType", "PERSONAL");
+
+		// changed on 23/10/2019
+		reqBodyObj.put("CountryCode", reqObject.getJSONObject("EmpJob").getString("countryOfCompany"));
+		reqBodyObj.put("DoNotStoreDocument", true);
+		reqBodyObj.put("AffectedHrisId", reqObject.getJSONObject("PerPerson").getString("personIdExternal"));
+		reqBodyObj.put("HrisId", loggedInUser);
 
 		JSONArray parameters = getReqBodyObj(reqBodyObj, reqObject);
 		reqBodyObj.put("parameters", parameters);

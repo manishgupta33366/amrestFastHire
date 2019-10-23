@@ -2023,7 +2023,7 @@ public class DocGen {
 				session.setAttribute(entityName, response);
 			else
 				// Generating Unique ID pep user and Entity
-				session.setAttribute("directReportEntities-" + directReportUserID + entityName, response);
+				session.setAttribute("directReportEntities-" + requestData.getString("userID") + entityName, response);
 			// logger.debug(entityName + " Response: " + response);
 		}
 		return entityResponseMap.get(entityName);
@@ -2218,6 +2218,8 @@ public class DocGen {
 
 		String fieldType = null;
 		JSONObject objToPlace;
+		String value;
+		String dataType;
 		while (iterator.hasNext()) {
 			mapTemplateField = iterator.next();
 			fieldType = mapTemplateField.getTemplateFiledTag().getType();
@@ -2227,11 +2229,12 @@ public class DocGen {
 			}
 			objToPlace = new JSONObject();
 			objToPlace.put("Key", mapTemplateField.getTemplateFiledTag().getId());
-			objToPlace.put("Value",
-					getFieldValue(mapTemplateField.getTemplateFiledTag().getField(), session, forDirectReport, null));
+			value = getFieldValue(mapTemplateField.getTemplateFiledTag().getField(), session, forDirectReport, null);
+			dataType = mapTemplateField.getTemplateFiledTag().getDataType();
+			objToPlace.put("Value", value);
 			// To place value at specific location in POST object
 			docPostObject = placeValue(objToPlace, mapTemplateField.getTemplateFiledTag().getPlaceFieldAtPath(),
-					docPostObject);
+					docPostObject, dataType);
 
 		}
 		processCountrySpecificFields(docPostObject, templateFieldTagBasedOnCountryArr, session, forDirectReport);
@@ -2275,13 +2278,14 @@ public class DocGen {
 				objToPlace = new JSONObject();
 				objToPlace.put("Key", tempTemplateFieldTag.getId() + 0 + counter++);
 				objToPlace.put("Value", fieldValue);
-				docPostObject = placeValue(objToPlace, tempTemplateFieldTag.getPlaceFieldAtPath(), docPostObject);
+				docPostObject = placeValue(objToPlace, tempTemplateFieldTag.getPlaceFieldAtPath(), docPostObject,
+						tempTemplateFieldTag.getDataType());
 			}
 		}
 		return docPostObject;
 	}
 
-	private JSONObject placeValue(JSONObject objToPlace, String placeAtPath, JSONObject placeAt) {
+	private JSONObject placeValue(JSONObject objToPlace, String placeAtPath, JSONObject placeAt, String dataType) {
 		// Function to place value at specific location in POST object
 
 		String[] pathArray = placeAtPath.split("/");
@@ -2296,7 +2300,18 @@ public class DocGen {
 					placeAt.put(key.substring(0, key.length() - 5), new JSONArray().put(objToPlace));
 
 			} else if (key.endsWith("\\0")) {
-				placeAt.put(objToPlace.getString("Key"), objToPlace.getString("Value"));
+
+				switch (dataType) { // switch for custom or default date format
+				case "String":
+					placeAt.put(objToPlace.getString("Key"), objToPlace.getString("Value"));
+					break;
+				case "Boolean":
+					placeAt.put(objToPlace.getString("Key"), Boolean.parseBoolean(objToPlace.getString("Value")));
+					break;
+				default:
+					placeAt.put(objToPlace.getString("Key"), objToPlace.getString("Value"));
+				}
+
 			}
 		}
 		return placeAt;
