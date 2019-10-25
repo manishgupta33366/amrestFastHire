@@ -680,12 +680,16 @@ public class DocGen {
 		 * available for the loggedIn user
 		 */
 
-		if (!adminTemplateAvailableCheck(ruleID, session, true)) { // for DirectReport
-			logger.error("Unauthorized access! User: " + loggerInUser
-					+ " Tried downloading document of a template templateID: " + templateID
-					+ " Which is not available for the UserId provided.");
-			return "You are not authorized to access this data! This event has been logged!";
-		}
+		/*
+		 * ***Warning Any Admin can download Template for any user ... i.e. A template
+		 * that may not be available to a user.
+		 */
+//		if (!adminTemplateAvailableCheck(ruleID, session, true)) { // for DirectReport
+//			logger.error("Unauthorized access! User: " + loggerInUser
+//					+ " Tried downloading document of a template templateID: " + templateID
+//					+ " Which is not available for the UserId provided.");
+//			return "You are not authorized to access this data! This event has been logged!";
+//		}
 		// Removing all the entities data from the session for Hard Reload of data from
 		// SF
 		List<String> distinctEntityNames = entitiesService.getDistinctNames();
@@ -837,35 +841,42 @@ public class DocGen {
 			throws BatchException, JSONException, ClientProtocolException, UnsupportedOperationException,
 			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, NamingException, URISyntaxException, IOException {
-		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
-		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
-		JSONArray availableTemplates;
-		JSONArray availableGroups = new JSONArray(
-				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null));
-		logger.debug("Available Groups:" + availableGroups.toString() + " ::: forDirectReport" + forDirectReport);
-		String groupID;
-		JSONObject tempAvailableTemplatesObj;
-		for (int i = 0; i < availableGroups.length(); i++) {
-			// saving group ID in Session requestData attribute as its expected in Get
-			// Templates function
-			groupID = availableGroups.getJSONObject(i).getString("id");
-			requestData.put("groupID", new JSONArray().put(groupID));
-			session.setAttribute("requestData", requestData.toString());
-			tempAvailableTemplatesObj = new JSONObject(
-					getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport, null));// Object of
-																									// Available
-																									// Templates for the
-																									// groups
-			availableTemplates = tempAvailableTemplatesObj.getJSONArray(groupID);
-			logger.debug(
-					"Available templates:" + availableTemplates.toString() + " ::: forDirectReport" + forDirectReport);
-			for (int j = 0; j < availableTemplates.length(); j++) {
-				if (requestData.getString("templateID").equals(availableTemplates.getJSONObject(j).getString("id"))) {
-					return true;
+		try {
+			List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+			JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+			JSONArray availableTemplates;
+			JSONArray availableGroups = new JSONArray(
+					getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null));
+			logger.debug("Available Groups:" + availableGroups.toString() + " ::: forDirectReport" + forDirectReport);
+			String groupID;
+			JSONObject tempAvailableTemplatesObj;
+			for (int i = 0; i < availableGroups.length(); i++) {
+				// saving group ID in Session requestData attribute as its expected in Get
+				// Templates function
+				groupID = availableGroups.getJSONObject(i).getString("id");
+				requestData.put("groupID", new JSONArray().put(groupID));
+				session.setAttribute("requestData", requestData.toString());
+				tempAvailableTemplatesObj = new JSONObject(
+						getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport, null));// Object of
+																										// Available
+																										// Templates for
+																										// the
+																										// groups
+				availableTemplates = tempAvailableTemplatesObj.getJSONArray(groupID);
+				logger.debug("Available templates:" + availableTemplates.toString() + " ::: forDirectReport"
+						+ forDirectReport);
+				for (int j = 0; j < availableTemplates.length(); j++) {
+					if (requestData.getString("templateID")
+							.equals(availableTemplates.getJSONObject(j).getString("id"))) {
+						return true;
+					}
 				}
 			}
+			return false;
+		} catch (Exception e) {
+			logger.debug("Exception::: at adminTemplateAvailableCheck So returned false.");
+			return false;
 		}
-		return false;
 	}
 	/*
 	 *** For Admin End***
