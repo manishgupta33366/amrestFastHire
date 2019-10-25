@@ -650,7 +650,11 @@ public class DocGen {
 		url = url.replaceFirst("<>", directReportUserID);// UserId passed from UI
 		// Entity name saved in KEY column
 		JSONArray responseArray = new JSONObject(callSFSingle(mapRuleField.getKey(), url)).getJSONArray("results");
-		session.setAttribute("directReportData-" + directReportUserID, responseArray.get(0).toString());
+		if (responseArray.length() > 0) {// when There are any directReports from SF
+			session.setAttribute("directReportData-" + directReportUserID, responseArray.get(0).toString());
+			return "true";
+		} // when DirectReports array is null
+		session.setAttribute("directReportData-" + directReportUserID, new JSONObject().toString());
 		return "true";
 	}
 
