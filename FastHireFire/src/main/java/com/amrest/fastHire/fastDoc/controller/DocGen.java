@@ -1136,34 +1136,42 @@ public class DocGen {
 			InvocationTargetException, NamingException, URISyntaxException, IOException {
 		// Rule in DB to get direct report (2 levels) of the loggedIn User
 
-		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
-		// getting the Parent/root array containing directReports
-		JSONArray parentDirectReportArray = new JSONArray(
-				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null)); // get DirectReports of
-																								// the user Two level
-		JSONArray responseDirectReports = new JSONArray();
-		JSONArray tempHoldChildDirectReports = new JSONArray();
-		String childDirectReportsPath = mapRuleField.get(1).getValueFromPath();// Path to fetch Child Direct Reports
-		String keyToRemoveObj = childDirectReportsPath.split("/")[0];// String to remove object from object before
-		String directReportData = ""; // copying
-		for (int i = 0; i < parentDirectReportArray.length(); i++) {
-			directReportData = getValueFromPath(childDirectReportsPath, parentDirectReportArray.getJSONObject(i),
-					session, forDirectReport, null);// fetching all the direct reports of a direct report
-			if (directReportData != "") {
-				tempHoldChildDirectReports = new JSONArray(directReportData);
-				for (int j = 0; j < tempHoldChildDirectReports.length(); j++) {
-					tempHoldChildDirectReports.getJSONObject(j).remove(keyToRemoveObj); // Removing object just make it
-																						// look
-																						// similar as of main obj
-					responseDirectReports.put(tempHoldChildDirectReports.get(j));
+		try {
+			List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+			// getting the Parent/root array containing directReports
+			JSONArray parentDirectReportArray = new JSONArray(
+					getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null)); // get DirectReports
+																									// of
+																									// the user Two
+																									// level
+			JSONArray responseDirectReports = new JSONArray();
+			JSONArray tempHoldChildDirectReports = new JSONArray();
+			String childDirectReportsPath = mapRuleField.get(1).getValueFromPath();// Path to fetch Child Direct Reports
+			String keyToRemoveObj = childDirectReportsPath.split("/")[0];// String to remove object from object before
+			String directReportData = ""; // copying
+			for (int i = 0; i < parentDirectReportArray.length(); i++) {
+				directReportData = getValueFromPath(childDirectReportsPath, parentDirectReportArray.getJSONObject(i),
+						session, forDirectReport, null);// fetching all the direct reports of a direct report
+				if (directReportData != "") {
+					tempHoldChildDirectReports = new JSONArray(directReportData);
+					for (int j = 0; j < tempHoldChildDirectReports.length(); j++) {
+						tempHoldChildDirectReports.getJSONObject(j).remove(keyToRemoveObj); // Removing object just make
+																							// it
+																							// look
+																							// similar as of main obj
+						responseDirectReports.put(tempHoldChildDirectReports.get(j));
+					}
+					// removing child directReports from Parent as those are already added to
+					// response
+					parentDirectReportArray.getJSONObject(i).remove(keyToRemoveObj);
+					responseDirectReports.put(parentDirectReportArray.getJSONObject(i));
 				}
-				// removing child directReports from Parent as those are already added to
-				// response
-				parentDirectReportArray.getJSONObject(i).remove(keyToRemoveObj);
-				responseDirectReports.put(parentDirectReportArray.getJSONObject(i));
 			}
+			return responseDirectReports.toString();
+		} catch (Exception e) {
+			logger.debug("Exception::: at getDirectReports So returned blank array.");
+			return new JSONArray().toString();
 		}
-		return responseDirectReports.toString();
 	}
 
 	String getTemplateName(String ruleID, HttpSession session, Boolean forDirectReport) {
@@ -1913,7 +1921,6 @@ public class DocGen {
 		// Calling SF URL to fetch Entity data
 		String loggedInUser = (String) session.getAttribute("loggedInUser");
 		String entityName = entity.getName();
-		String directReportUserID = null;
 		Map<String, String> entityMap = new HashMap<String, String>();
 		BatchRequest batchRequest = new BatchRequest();
 		batchRequest.configureDestination(CommonVariables.sfDestination);

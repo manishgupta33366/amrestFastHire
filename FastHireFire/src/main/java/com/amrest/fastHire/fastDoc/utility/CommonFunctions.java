@@ -101,31 +101,16 @@ public class CommonFunctions {
 
 	public static Boolean checkIfAdmin(String loggedInUser)
 			throws NamingException, ClientProtocolException, IOException, URISyntaxException {
-		DestinationClient destClient = CommonFunctions.getDestinationCLient(CommonVariables.sfDestination);
+		DestinationClient destClient = CommonFunctions.getDestinationCLient(CommonVariables.sfAdminPermission);
 		try {
-			// calling users API to get country of the loggedIn user
-			HttpResponse response = destClient.callDestinationGET("/User",
-					"?$filter=userId eq '" + loggedInUser + "'&$format=json&$select=country");
+			HttpResponse response = destClient.callDestinationGET("/getDynamicGroupsByUser",
+					"?userId='" + loggedInUser + "'&$format=json&groupSubType='permission'");
 			String responseJsonString = EntityUtils.toString(response.getEntity(), "UTF-8");
 			JSONObject responseObject = new JSONObject(responseJsonString);
-			responseObject = responseObject.getJSONObject("d").getJSONArray("results").getJSONObject(0);
+			JSONArray responseObjectArray = responseObject.getJSONArray("d");
 
-			// calling DynamicGroup to get GroupID
-			response = destClient.callDestinationGET("/DynamicGroup", "?$format=json&$filter=groupName eq 'CS_HR_ADMIN_"
-					+ responseObject.getString("country") + "' and groupType eq 'permission'&$select=groupID");
-			responseJsonString = EntityUtils.toString(response.getEntity(), "UTF-8");
-			responseObject = new JSONObject(responseJsonString);
-			responseObject = responseObject.getJSONObject("d").getJSONArray("results").getJSONObject(0);
-
-			// calling getUsersByDynamicGroup to check if user trying to logging is an Admin
-			destClient = CommonFunctions.getDestinationCLient(CommonVariables.sfAdminPermission);
-			response = destClient.callDestinationGET("/getUsersByDynamicGroup", "?$format=json&$filter=userId eq '"
-					+ loggedInUser + "'&groupId=" + responseObject.getString("groupID") + "L");
-			responseJsonString = EntityUtils.toString(response.getEntity(), "UTF-8");
-			responseObject = new JSONObject(responseJsonString);
-			JSONArray responseArray = responseObject.getJSONArray("d");
-			for (int i = 0; i < responseArray.length(); i++) {
-				if (responseArray.getJSONObject(i).getString("userId").equals(loggedInUser)) {
+			for (int i = 0; i < responseObjectArray.length(); i++) {
+				if (responseObjectArray.getJSONObject(i).getString("groupName").toLowerCase().contains("admin")) {
 					return true;
 				}
 			}
