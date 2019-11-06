@@ -46,13 +46,13 @@ public class MapCountryCompanyGroupServiceImp implements MapCountryCompanyGroupS
 		if (isManager) {
 			query = em.createNamedQuery("MapCountryCompanyGroup.findByCountryCompany_Manager")
 					.setParameter("countryID", countryID).setParameter("companyID", companyID)
-					.setParameter("isMssRelevant", true);
+					.setParameter("isMssRelevant", true).setParameter("isActive", true).setParameter("showOnUI", true);
 			items = query.getResultList();
 			return items;
 		}
 		query = em.createNamedQuery("MapCountryCompanyGroup.findByCountryCompany_Employee")
 				.setParameter("countryID", countryID).setParameter("companyID", companyID)
-				.setParameter("isEssRelevant", true);
+				.setParameter("isEssRelevant", true).setParameter("isActive", true).setParameter("showOnUI", true);
 		items = query.getResultList();
 		return items;
 	}
@@ -66,13 +66,15 @@ public class MapCountryCompanyGroupServiceImp implements MapCountryCompanyGroupS
 		if (isManager) {
 			query = em.createNamedQuery("MapCountryCompanyGroup.findByGroupCountryCompany_Manager")
 					.setParameter("groupID", groupID).setParameter("countryID", countryID)
-					.setParameter("companyID", companyID).setParameter("isMssRelevant", true);
+					.setParameter("companyID", companyID).setParameter("isMssRelevant", true)
+					.setParameter("isActive", true).setParameter("showOnUI", true);
 			items = query.getResultList();
 			return items;
 		}
 		query = em.createNamedQuery("MapCountryCompanyGroup.findByGroupCountryCompany_Employee")
 				.setParameter("groupID", groupID).setParameter("countryID", countryID)
-				.setParameter("companyID", companyID).setParameter("isEssRelevant", true);
+				.setParameter("companyID", companyID).setParameter("isEssRelevant", true).setParameter("isActive", true)
+				.setParameter("showOnUI", true);
 		items = query.getResultList();
 		return items;
 	}
@@ -83,7 +85,8 @@ public class MapCountryCompanyGroupServiceImp implements MapCountryCompanyGroupS
 		Query query;
 		List<MapCountryCompanyGroup> items;
 		query = em.createNamedQuery("MapCountryCompanyGroup.findByCountryCompany_Admin")
-				.setParameter("countryID", countryID).setParameter("companyID", companyID);
+				.setParameter("countryID", countryID).setParameter("companyID", companyID)
+				.setParameter("isActive", true).setParameter("showOnUI", true);
 		items = query.getResultList();
 		return items;
 	}
@@ -95,7 +98,7 @@ public class MapCountryCompanyGroupServiceImp implements MapCountryCompanyGroupS
 		List<MapCountryCompanyGroup> items;
 		query = em.createNamedQuery("MapCountryCompanyGroup.findByGroupCountryCompany_Admin")
 				.setParameter("groupID", groupID).setParameter("countryID", countryID)
-				.setParameter("companyID", companyID);
+				.setParameter("companyID", companyID).setParameter("isActive", true).setParameter("showOnUI", true);
 		items = query.getResultList();
 		return items;
 	}
@@ -105,7 +108,8 @@ public class MapCountryCompanyGroupServiceImp implements MapCountryCompanyGroupS
 	public List<MapCountryCompanyGroup> findByCountry(String countryID) {
 		Query query;
 		List<MapCountryCompanyGroup> items;
-		query = em.createNamedQuery("MapCountryCompanyGroup.findByCountry").setParameter("countryID", countryID);
+		query = em.createNamedQuery("MapCountryCompanyGroup.findByCountry").setParameter("countryID", countryID)
+				.setParameter("isActive", true).setParameter("showOnUI", true);
 		items = query.getResultList();
 		return items;
 	}

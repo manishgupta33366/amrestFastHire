@@ -28,13 +28,13 @@ import com.amrest.fastHire.fastDoc.config.DBConfiguration;
 @Entity
 @Table(name = DBConfiguration.MAP_COUNTRY_COMPANY_GROUP, schema = DBConfiguration.SCHEMA_NAME)
 @NamedQueries({
-		@NamedQuery(name = "MapCountryCompanyGroup.findByCountryCompany_Manager", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isMssRelevant = :isMssRelevant"),
-		@NamedQuery(name = "MapCountryCompanyGroup.findByCountryCompany_Employee", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isEssRelevant = :isEssRelevant"),
-		@NamedQuery(name = "MapCountryCompanyGroup.findByGroupCountryCompany_Manager", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.groupID = :groupID AND MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isMssRelevant = :isMssRelevant"),
-		@NamedQuery(name = "MapCountryCompanyGroup.findByGroupCountryCompany_Employee", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.groupID = :groupID AND MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isEssRelevant = :isEssRelevant"),
-		@NamedQuery(name = "MapCountryCompanyGroup.findByCountryCompany_Admin", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.countryID = :countryID AND MCCG.companyID = :companyID"),
-		@NamedQuery(name = "MapCountryCompanyGroup.findByGroupCountryCompany_Admin", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.groupID = :groupID AND MCCG.countryID = :countryID AND MCCG.companyID = :companyID"),
-		@NamedQuery(name = "MapCountryCompanyGroup.findByCountry", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.countryID = :countryID") })
+		@NamedQuery(name = "MapCountryCompanyGroup.findByCountryCompany_Manager", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isMssRelevant = :isMssRelevant and MCCG.isActive = :isActive and MCCG.showOnUI = :showOnUI"),
+		@NamedQuery(name = "MapCountryCompanyGroup.findByCountryCompany_Employee", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isEssRelevant = :isEssRelevant and MCCG.isActive = :isActive and MCCG.showOnUI = :showOnUI"),
+		@NamedQuery(name = "MapCountryCompanyGroup.findByGroupCountryCompany_Manager", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.groupID = :groupID AND MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isMssRelevant = :isMssRelevant and MCCG.isActive = :isActive and MCCG.showOnUI = :showOnUI"),
+		@NamedQuery(name = "MapCountryCompanyGroup.findByGroupCountryCompany_Employee", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.groupID = :groupID AND MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isEssRelevant = :isEssRelevant  and MCCG.isActive = :isActive and MCCG.showOnUI = :showOnUI"),
+		@NamedQuery(name = "MapCountryCompanyGroup.findByCountryCompany_Admin", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.countryID = :countryID AND MCCG.companyID = :companyID  and MCCG.isActive = :isActive and MCCG.showOnUI = :showOnUI"),
+		@NamedQuery(name = "MapCountryCompanyGroup.findByGroupCountryCompany_Admin", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.groupID = :groupID AND MCCG.countryID = :countryID AND MCCG.companyID = :companyID and MCCG.isActive = :isActive and MCCG.showOnUI = :showOnUI"),
+		@NamedQuery(name = "MapCountryCompanyGroup.findByCountry", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.countryID = :countryID and MCCG.isActive = :isActive and MCCG.showOnUI = :showOnUI") })
 
 public class MapCountryCompanyGroup {
 	@Id
