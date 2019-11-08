@@ -1517,7 +1517,7 @@ public class DocGen {
 		for (int i = 0; i < groupIdArray.length(); i++) {
 			groupID = groupIdArray.getString(i);// groupID passed from UI
 			Boolean groupAvailableCheck = mapCountryCompanyGroupService
-					.findByGroupCountryCompany(groupID, countryID, companyID, isManager).size() == 1 ? true : false;
+					.findByGroupCountryCompany(groupID, countryID, companyID, false).size() == 1 ? true : false;
 			if (!groupAvailableCheck) {
 				logger.error("Unauthorized access! User: " + (String) session.getAttribute("loggedInUser")
 						+ " Tried accessing templates of group that is not available for this user. groupID: "
