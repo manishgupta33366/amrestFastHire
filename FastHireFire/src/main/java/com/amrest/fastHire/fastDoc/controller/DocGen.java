@@ -1402,6 +1402,29 @@ public class DocGen {
 		return codelistText.size() > 0 ? codelistText.get(0).getValue() : "";
 	}
 
+	String performOperation(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// rule required to perform operation on two fields
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		String operand1 = getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null);
+		String operand2 = getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport, null);
+		String operator = mapRuleField.get(1).getKey();
+		switch (operator) {
+		case "+":
+			return String.valueOf(Integer.parseInt(operand1) + Integer.parseInt(operand2));
+		case "-":
+			return String.valueOf(Integer.parseInt(operand1) - Integer.parseInt(operand2));
+		case "*":
+			return String.valueOf(Integer.parseInt(operand1) * Integer.parseInt(operand2));
+		case "/":
+			return String.valueOf(Integer.parseInt(operand1) / Integer.parseInt(operand2));
+		default:
+			return "";
+		}
+	}
+
 	/*
 	 *** GET Rules END***
 	 */
