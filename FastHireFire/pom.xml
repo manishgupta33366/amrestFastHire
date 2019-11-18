@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.amrest</groupId>
@@ -110,25 +111,25 @@
 			<groupId>com.googlecode.json-simple</groupId>
 			<artifactId>json-simple</artifactId>
 		</dependency>
-		
+
 		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt -->
 		<dependency>
-		    <groupId>io.jsonwebtoken</groupId>
-		    <artifactId>jjwt</artifactId>
-		    <version>0.9.1</version>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt</artifactId>
+			<version>0.9.1</version>
 		</dependency>
-		
-			<!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk16 -->
-			<dependency>
-			    <groupId>org.bouncycastle</groupId>
-			    <artifactId>bcprov-jdk16</artifactId>
-			    <version>1.46</version>
-			</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk16 -->
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk16</artifactId>
+			<version>1.46</version>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.olingo/olingo-odata2-api -->
 		<dependency>
-		    <groupId>org.apache.olingo</groupId>
-		    <artifactId>olingo-odata2-api</artifactId>
-		    <version>2.0.10</version>
+			<groupId>org.apache.olingo</groupId>
+			<artifactId>olingo-odata2-api</artifactId>
+			<version>2.0.10</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml -->
 		<dependency>
@@ -137,23 +138,29 @@
 			<version>4.1.0</version>
 		</dependency>
 		<dependency>
-	      <groupId>org.apache.olingo</groupId>
-	      <artifactId>olingo-odata2-core</artifactId>
-	      <version>2.0.10</version>
-	      <exclusions>
-	        <exclusion>
-	          <groupId>javax.ws.rs</groupId>
-	          <artifactId>javax.ws.rs-api</artifactId>
-	        </exclusion>
-	      </exclusions>
-	    </dependency>
-			
-		<dependency>
-		  <groupId>com.google.guava</groupId>
-		  <artifactId>guava</artifactId>
-		  <version>23.0</version>
+			<groupId>org.apache.olingo</groupId>
+			<artifactId>olingo-odata2-core</artifactId>
+			<version>2.0.10</version>
+			<exclusions>
+				<exclusion>
+					<groupId>javax.ws.rs</groupId>
+					<artifactId>javax.ws.rs-api</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
-	
+
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>23.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/pl.allegro.finance/tradukisto -->
+		<dependency>
+			<groupId>pl.allegro.finance</groupId>
+			<artifactId>tradukisto</artifactId>
+			<version>1.8.0</version>
+		</dependency>
+
 	</dependencies>
 	<build>
 		<plugins>

@@ -3,6 +3,7 @@ package com.amrest.fastHire.fastDoc.controller;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -69,6 +70,9 @@ import com.amrest.fastHire.fastDoc.service.TemplateFastDocService;
 import com.amrest.fastHire.fastDoc.service.TextService;
 import com.amrest.fastHire.fastDoc.utility.CommonFunctions;
 import com.amrest.fastHire.fastDoc.utility.CommonVariables;
+
+import pl.allegro.finance.tradukisto.MoneyConverters;
+import pl.allegro.finance.tradukisto.ValueConverters;
 
 /*
  * AppName: DocGen
@@ -176,13 +180,23 @@ public class DocGen {
 	}
 
 	@GetMapping(value = "/test")
-	public ResponseEntity<?> test(@RequestParam(name = "url") String url) {
+	public ResponseEntity<?> test(@RequestParam(name = "url") int url) {
 		try {
-			JSONObject body = new JSONObject();
-			body.put("Gcc", "AMR");
-			body.put("CompanyCode", "AMR_HU001");
-			body.put("CountryCode", "AMR");
-			return ResponseEntity.ok().body(CommonFunctions.callpostAPI(url, body));
+			ValueConverters converter = ValueConverters.ENGLISH_INTEGER;
+			String valueAsWords = converter.asWords(url);
+			return ResponseEntity.ok().body(valueAsWords);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@GetMapping(value = "/testMoneyConverter")
+	public ResponseEntity<?> testMoneyConverter(@RequestParam(name = "url") float url) {
+		try {
+			MoneyConverters converter = MoneyConverters.ENGLISH_BANKING_MONEY_VALUE;
+			String moneyAsWords = converter.asWords(new BigDecimal(url));
+			return ResponseEntity.ok().body(moneyAsWords);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -1390,7 +1404,7 @@ public class DocGen {
 		List<MapRuleFields> mapRuleFields = mapRuleFieldsService.findByRuleID(ruleID);
 		String CodelistSFKey = getFieldValue(mapRuleFields.get(0).getField(), session, forDirectReport, null);// SF_key
 																												// of
-		// Code-list
+																												// Code-list
 		if (CodelistSFKey.equals(""))
 			return "";
 		String codeListID = codelistService.findByFieldAndKey(mapRuleFields.get(0).getFieldID(), CodelistSFKey).get(0)
@@ -1425,6 +1439,23 @@ public class DocGen {
 		}
 	}
 
+	String convertDigitsToWords(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// rule required to convert digits to words
+
+		List<MapRuleFields> mapRuleFields = mapRuleFieldsService.findByRuleID(ruleID);
+		String digitsToConvert = getFieldValue(mapRuleFields.get(0).getField(), session, forDirectReport, null);
+		String countryToConvertIn = getFieldValue(mapRuleFields.get(0).getField(), session, forDirectReport, null);
+
+		switch (countryToConvertIn) {
+		case "POL":
+			return convertToDigitsToPolish(digitsToConvert);
+		default:
+			return digitsToConvert;
+		}
+	}
 	/*
 	 *** GET Rules END***
 	 */
@@ -2134,7 +2165,6 @@ public class DocGen {
 					String keyToSearchInEachObj = key.substring(key.indexOf("~SearchForKey~") + 14,
 							key.indexOf("~FieldID~"));
 					String fieldID = key.substring(key.indexOf("~FieldID~") + 9, key.indexOf('['));
-					// System.out.println("FieldID: " + fieldID + " Key: " + keyToSearchInEachObj);
 					String valueToSearch;
 					if (fieldID.equals("PARAMETER")) // if fieldID equals PARAMETER then the value to be search is
 														// coming from the parameter passed by the calling function
@@ -2398,6 +2428,218 @@ public class DocGen {
 				.findByRuleID(rulesService.findByRuleName("getLocale").get(0).getId()).get(0).getField(), session,
 				false, null);
 		return locale;
+	}
+
+	private String convertToDigitsToPolish(String text) {
+		// required to convert text to polish
+
+		String w = "";
+		if (Double.valueOf(text) < 0)
+			w = "minus ";
+
+		Double floatNum = Math.abs(Double.valueOf(text));
+
+		text = Double.toString(floatNum);
+
+		String formatNumber = String.format("%015.2f", Double.valueOf(text));
+		String mld = formatNumber.substring(0, 3);
+
+		String m = formatNumber.substring(3, 6);
+
+		String t = formatNumber.substring(6, 9);
+		String j = formatNumber.substring(9, 12);
+
+		String g = 0 + formatNumber.substring(13, 15);
+
+		/*
+		 * Processing mld
+		 */
+		switch (Integer.parseInt(mld)) {
+		case 0:
+			break;
+		case 1:
+			w = "jeden miliard ";
+			break;
+		default:
+			w = w + digitsToPolishWordsHelper(mld);
+			if (Integer.parseInt(mld.substring(1, 2)) != 1 && (Integer.parseInt(mld.substring(2, 3)) == 2
+					|| Integer.parseInt(mld.substring(2, 3)) == 3 || Integer.parseInt(mld.substring(2, 3)) == 4))
+				w = w + "miliardy ";
+			else
+				w = w + "miliardów ";
+		}
+
+		/*
+		 * Processing m
+		 */
+		switch (Integer.parseInt(m)) {
+		case 0:
+			break;
+		case 1:
+			w = "jeden milion ";
+			break;
+		default:
+			w = w + digitsToPolishWordsHelper(m);
+			if (Integer.parseInt(m.substring(1, 2)) != 1 && (Integer.parseInt(m.substring(2, 3)) == 2
+					|| Integer.parseInt(m.substring(2, 3)) == 3 || Integer.parseInt(m.substring(2, 3)) == 4))
+				w = w + "miliony ";
+			else
+				w = w + "milionów ";
+		}
+
+		/*
+		 * Processing t
+		 */
+		switch (Integer.parseInt(t)) {
+		case 0:
+
+			break;
+		case 1:
+			w = "jeden tysiąc ";
+			break;
+		default:
+			w = w + digitsToPolishWordsHelper(t);
+			if (Integer.parseInt(t.substring(1, 2)) != 1 && (Integer.parseInt(t.substring(2, 3)) == 2
+					|| Integer.parseInt(t.substring(2, 3)) == 3 || Integer.parseInt(t.substring(2, 3)) == 4))
+				w = w + "tysiące ";
+			else
+				w = w + "tysięcy ";
+		}
+
+		/*
+		 * Processing j
+		 */
+		switch (Integer.parseInt(j)) {
+		case 0:
+			if (Integer.parseInt(mld) == 0 && Integer.parseInt(m) == 0 && Integer.parseInt(t) == 0)
+				w = w + "zero złotych ";
+			else
+				w = w + "złotych ";
+			break;
+		case 1:
+			if (Integer.parseInt(mld) == 0 && Integer.parseInt(m) == 0 && Integer.parseInt(t) == 0)
+				w = w + "jeden złoty ";
+			else
+				w = w + "jeden złotych ";
+			break;
+		default:
+			w = w + digitsToPolishWordsHelper(j);
+			if (Integer.parseInt(j.substring(1, 2)) != 1 && (Integer.parseInt(j.substring(2, 3)) == 2
+					|| Integer.parseInt(j.substring(2, 3)) == 3 || Integer.parseInt(j.substring(2, 3)) == 4))
+				w = w + "złote ";
+			else
+				w = w + "złotych ";
+		}
+
+		/*
+		 * Processing g
+		 */
+		switch (Integer.parseInt(g)) {
+		case 0:
+			w = w;// confirm once in excel its w '& "zero groszy"
+			break;
+		case 1:
+			w = w + "jeden grosz";
+			break;
+		default:
+			w = w + digitsToPolishWordsHelper(g);
+			if (Integer.parseInt(g.substring(1, 2)) != 1 && (Integer.parseInt(g.substring(2, 3)) == 2
+					|| Integer.parseInt(g.substring(2, 3)) == 3 || Integer.parseInt(g.substring(2, 3)) == 4))
+				w = w + "grosze";
+			else
+				w = w + "groszy";
+		}
+		return w;
+	}
+
+	private String digitsToPolishWordsHelper(String x) {
+		// required to convert text to polish
+		String x3 = x.substring(0, 1);
+		String x2 = x.substring(1, 2);
+		String x1 = x.substring(2, 3);
+
+		int intx3 = Integer.parseInt(x3);
+		int intx2 = Integer.parseInt(x2);
+		int intx1 = Integer.parseInt(x1);
+		String w = "";
+		if (intx3 == 9)
+			w = w + "dziewięćset ";
+		else if (intx3 == 8)
+			w = w + "osiemset ";
+		else if (intx3 == 7)
+			w = w + "siedemset ";
+		else if (intx3 == 6)
+			w = w + "sześćset ";
+		else if (intx3 == 5)
+			w = w + "pięćset ";
+		else if (intx3 == 4)
+			w = w + "czterysta ";
+		else if (intx3 == 3)
+			w = w + "trzysta ";
+		else if (intx3 == 2)
+			w = w + "dwieście ";
+		else if (intx3 == 1)
+			w = w + "sto ";
+
+		if (intx2 == 9)
+			w = w + "dziewięćdziesiąt ";
+		else if (intx2 == 8)
+			w = w + "osiemdziesiąt ";
+		else if (intx2 == 7)
+			w = w + "siedemdziesiąt ";
+		else if (intx2 == 6)
+			w = w + "sześćdziesiąt ";
+		else if (intx2 == 5)
+			w = w + "pięćdziesiąt ";
+		else if (intx2 == 4)
+			w = w + "czterdzieści ";
+		else if (intx2 == 3)
+			w = w + "trzydzieści ";
+		else if (intx2 == 2)
+			w = w + "dwadzieścia ";
+		else if (intx2 == 1) {
+			if (intx1 == 9)
+				w = w + "dziewiętnaście ";
+			else if (intx1 == 8)
+				w = w + "osiemnaście ";
+			else if (intx1 == 7)
+				w = w + "siedemnaście ";
+			else if (intx1 == 6)
+				w = w + "szesnaście ";
+			else if (intx1 == 5)
+				w = w + "piętnaście ";
+			else if (intx1 == 4)
+				w = w + "czternaście ";
+			else if (intx1 == 3)
+				w = w + "trzynaście ";
+			else if (intx1 == 2)
+				w = w + "dwanaście ";
+			else if (intx1 == 1)
+				w = w + "jedenaście ";
+			else if (intx1 == 0)
+				w = w + "dziesięć ";
+		}
+		if (intx2 != 1) {
+			if (intx1 == 9)
+				w = w + "dziewięć ";
+			else if (intx1 == 8)
+				w = w + "osiem ";
+			else if (intx1 == 7)
+				w = w + "siedem ";
+			else if (intx1 == 6)
+				w = w + "sześć ";
+			else if (intx1 == 5)
+				w = w + "pięć ";
+			else if (intx1 == 4)
+				w = w + "cztery ";
+			else if (intx1 == 3)
+				w = w + "trzy ";
+			else if (intx1 == 2)
+				w = w + "dwa ";
+			else if (intx1 == 1)
+				w = w + "jeden ";
+		}
+		return w;
 	}
 	/*
 	 *** Helper functions END***
