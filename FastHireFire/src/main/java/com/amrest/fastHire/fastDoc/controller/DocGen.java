@@ -1449,7 +1449,7 @@ public class DocGen {
 		String digitsToConvert = getFieldValue(mapRuleFields.get(0).getField(), session, forDirectReport, null);
 		String countryToConvertIn = getFieldValue(mapRuleFields.get(1).getField(), session, forDirectReport, null);
 		logger.debug("Country in which text to be converted: " + countryToConvertIn);
-		if (!(digitsToConvert.length() > 0))
+		if (!(digitsToConvert.length() > 0)) // Check if value is blank, return ""
 			return "";
 		switch (countryToConvertIn) {
 		case "POL":
