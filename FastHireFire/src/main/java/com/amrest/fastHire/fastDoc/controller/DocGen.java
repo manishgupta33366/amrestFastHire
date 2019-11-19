@@ -1447,11 +1447,13 @@ public class DocGen {
 
 		List<MapRuleFields> mapRuleFields = mapRuleFieldsService.findByRuleID(ruleID);
 		String digitsToConvert = getFieldValue(mapRuleFields.get(0).getField(), session, forDirectReport, null);
-		String countryToConvertIn = getFieldValue(mapRuleFields.get(0).getField(), session, forDirectReport, null);
-
+		String countryToConvertIn = getFieldValue(mapRuleFields.get(1).getField(), session, forDirectReport, null);
+		logger.debug("Country in which text to be converted: " + countryToConvertIn);
+		if (!(digitsToConvert.length() > 0))
+			return "";
 		switch (countryToConvertIn) {
 		case "POL":
-			return convertToDigitsToPolish(digitsToConvert);
+			return convertDigitsToPolish(digitsToConvert);
 		default:
 			return digitsToConvert;
 		}
@@ -2430,7 +2432,7 @@ public class DocGen {
 		return locale;
 	}
 
-	private String convertToDigitsToPolish(String text) {
+	private String convertDigitsToPolish(String text) {
 		// required to convert text to polish
 
 		String w = "";
