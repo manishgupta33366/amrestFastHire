@@ -45,6 +45,7 @@ import com.amrest.fastHire.fastDoc.model.CodelistText;
 import com.amrest.fastHire.fastDoc.model.CountrySpecificFields;
 import com.amrest.fastHire.fastDoc.model.Entities;
 import com.amrest.fastHire.fastDoc.model.Fields;
+import com.amrest.fastHire.fastDoc.model.FormatSeparators;
 import com.amrest.fastHire.fastDoc.model.MapCountryCompanyGroup;
 import com.amrest.fastHire.fastDoc.model.MapGroupTemplates;
 import com.amrest.fastHire.fastDoc.model.MapRuleFields;
@@ -59,6 +60,7 @@ import com.amrest.fastHire.fastDoc.service.CodelistTextService;
 import com.amrest.fastHire.fastDoc.service.CountrySpecificFieldsService;
 import com.amrest.fastHire.fastDoc.service.EntitiesService;
 import com.amrest.fastHire.fastDoc.service.FieldsService;
+import com.amrest.fastHire.fastDoc.service.FormatSeparatorsService;
 import com.amrest.fastHire.fastDoc.service.MapCountryCompanyGroupService;
 import com.amrest.fastHire.fastDoc.service.MapGroupTemplatesService;
 import com.amrest.fastHire.fastDoc.service.MapRuleFieldsService;
@@ -134,6 +136,9 @@ public class DocGen {
 
 	@Autowired
 	TextService textService;
+
+	@Autowired
+	FormatSeparatorsService formatSeparatorsService;
 
 	@GetMapping(value = "/login")
 	public ResponseEntity<?> login(HttpServletRequest request) {
@@ -1002,14 +1007,19 @@ public class DocGen {
 			NamingException, URISyntaxException, IOException {
 		// Rule in DB Required to format dates
 		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+
 		String language = getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null);
 		Calendar cal = Calendar.getInstance();
 		long dateToFormat = cal.getTimeInMillis(); // current date and time
 		Date date;
 		Locale locale;
 		SimpleDateFormat sdf;
-		String seprator1 = mapRuleField.get(0).getKey();
-		String seprator2 = mapRuleField.get(1).getKey();
+
+		List<FormatSeparators> fileSeparator = formatSeparatorsService
+				.findByRuleFieldIdCountry(mapRuleField.get(0).getId(), language);
+		String seprator1 = fileSeparator.size() > 0 ? fileSeparator.get(0).getSeparator() : " ";
+		fileSeparator = formatSeparatorsService.findByRuleFieldIdCountry(mapRuleField.get(1).getId(), language);
+		String seprator2 = fileSeparator.size() > 0 ? fileSeparator.get(0).getSeparator() : ", ";
 		switch (language) { // switch for custom or default date format
 		case "HUN":
 			date = new Date(dateToFormat);
@@ -1027,7 +1037,7 @@ public class DocGen {
 			// works with default languages like: fr, en, sv, es, de, etc
 			locale = new Locale(language);
 			date = new Date(dateToFormat);
-			sdf = new SimpleDateFormat("MMMM dd, yyyy", locale);
+			sdf = new SimpleDateFormat("MMMM" + seprator1 + "dd" + seprator2 + "yyyy", locale);
 			return (sdf.format(date));
 		}
 	}
@@ -1282,8 +1292,11 @@ public class DocGen {
 		if (dateToFormat.equals("")) // return if value returned is ""
 			return "";
 		dateToFormat = dateToFormat.substring(dateToFormat.indexOf("(") + 1, dateToFormat.indexOf(")"));
-		String seprator1 = mapRuleField.get(0).getKey();
-		String seprator2 = mapRuleField.get(1).getKey();
+		List<FormatSeparators> fileSeparator = formatSeparatorsService
+				.findByRuleFieldIdCountry(mapRuleField.get(0).getId(), language);
+		String seprator1 = fileSeparator.size() > 0 ? fileSeparator.get(0).getSeparator() : " ";
+		fileSeparator = formatSeparatorsService.findByRuleFieldIdCountry(mapRuleField.get(1).getId(), language);
+		String seprator2 = fileSeparator.size() > 0 ? fileSeparator.get(0).getSeparator() : ", ";
 		Date date;
 		Locale locale;
 		SimpleDateFormat sdf;
@@ -1303,7 +1316,7 @@ public class DocGen {
 			// works with default languages like: fr, en, sv, es, de etc
 			locale = new Locale(language);
 			date = new Date(Long.parseLong(dateToFormat));
-			sdf = new SimpleDateFormat("MMMM dd, yyyy", locale);
+			sdf = new SimpleDateFormat("MMMM" + seprator1 + "dd" + seprator2 + "yyyy", locale);
 			return (sdf.format(date));
 
 		}
@@ -1357,8 +1370,11 @@ public class DocGen {
 		Date decMonth = new Date(1577786942000L);
 		Locale locale;
 		SimpleDateFormat sdf_MMDD;
-		String seprator1 = mapRuleField.get(0).getKey();
-		String seprator2 = mapRuleField.get(1).getKey();
+		List<FormatSeparators> fileSeparator = formatSeparatorsService
+				.findByRuleFieldIdCountry(mapRuleField.get(0).getId(), language);
+		String seprator1 = fileSeparator.size() > 0 ? fileSeparator.get(0).getSeparator() : " ";
+		fileSeparator = formatSeparatorsService.findByRuleFieldIdCountry(mapRuleField.get(1).getId(), language);
+		String seprator2 = fileSeparator.size() > 0 ? fileSeparator.get(0).getSeparator() : ", ";
 		switch (language) {
 		case "HUN":
 			Calendar cal = Calendar.getInstance();
@@ -1374,8 +1390,8 @@ public class DocGen {
 		default:
 			// works with default languages like: fr, en, sv, es, etc
 			locale = new Locale(language);
-			sdf_MMDD = new SimpleDateFormat("MMMM dd,", locale);
-			return (sdf_MMDD.format(decMonth) + " " + (Integer.parseInt(sdf_YYYY.format(date))
+			sdf_MMDD = new SimpleDateFormat("MMMM" + seprator1 + "dd", locale);
+			return (sdf_MMDD.format(decMonth) + seprator2 + (Integer.parseInt(sdf_YYYY.format(date))
 					+ Integer.parseInt(getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport, null))));
 		}
 	}
@@ -2177,7 +2193,9 @@ public class DocGen {
 						fieldID = key.substring(key.indexOf("~TABLE_SF_DATA~") + 15, key.indexOf('['));
 						valueToSearch = getFieldValue(fieldsService.findByID(fieldID).get(0), session, forDirectReport,
 								null);
-						valueToSearch = sFDataMappingService.findByKey(valueToSearch).get(0).getData();
+						valueToSearch = sFDataMappingService.findByKey(valueToSearch).size() > 0
+								? sFDataMappingService.findByKey(valueToSearch).get(0).getData()
+								: "";
 					} else // else Value to search will come from a field
 						valueToSearch = getFieldValue(fieldsService.findByID(fieldID).get(0), session, forDirectReport,
 								null);
