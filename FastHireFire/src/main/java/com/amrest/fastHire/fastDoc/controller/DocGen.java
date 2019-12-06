@@ -1,10 +1,15 @@
 package com.amrest.fastHire.fastDoc.controller;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -13,18 +18,24 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import javax.naming.NamingException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.util.EntityUtils;
 import org.apache.olingo.odata2.api.batch.BatchException;
 import org.apache.olingo.odata2.api.client.batch.BatchSingleResponse;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,8 +48,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.amrest.fastHire.fastDoc.connection.BatchRequest;
 import com.amrest.fastHire.fastDoc.model.CodelistText;
@@ -53,6 +66,7 @@ import com.amrest.fastHire.fastDoc.model.MapTemplateCriteriaValues;
 import com.amrest.fastHire.fastDoc.model.MapTemplateFields;
 import com.amrest.fastHire.fastDoc.model.Rules;
 import com.amrest.fastHire.fastDoc.model.TemplateFieldTag;
+import com.amrest.fastHire.fastDoc.model.TemplateTest;
 import com.amrest.fastHire.fastDoc.model.Templates;
 import com.amrest.fastHire.fastDoc.model.Text;
 import com.amrest.fastHire.fastDoc.service.CodelistService;
@@ -69,12 +83,12 @@ import com.amrest.fastHire.fastDoc.service.MapTemplateFieldsService;
 import com.amrest.fastHire.fastDoc.service.RulesService;
 import com.amrest.fastHire.fastDoc.service.SFDataMappingService;
 import com.amrest.fastHire.fastDoc.service.TemplateFastDocService;
+import com.amrest.fastHire.fastDoc.service.TemplateTestService;
 import com.amrest.fastHire.fastDoc.service.TextService;
 import com.amrest.fastHire.fastDoc.utility.CommonFunctions;
 import com.amrest.fastHire.fastDoc.utility.CommonVariables;
 
 import pl.allegro.finance.tradukisto.MoneyConverters;
-import pl.allegro.finance.tradukisto.ValueConverters;
 
 /*
  * AppName: DocGen
@@ -140,6 +154,9 @@ public class DocGen {
 	@Autowired
 	FormatSeparatorsService formatSeparatorsService;
 
+	@Autowired
+	TemplateTestService templateTestService;
+
 	@GetMapping(value = "/login")
 	public ResponseEntity<?> login(HttpServletRequest request) {
 		try {
@@ -184,12 +201,70 @@ public class DocGen {
 		}
 	}
 
-	@GetMapping(value = "/test")
-	public ResponseEntity<?> test(@RequestParam(name = "url") int url) {
+	@PostMapping(value = "/downloadTestTemplate")
+	public void downloadTestTemplate(@RequestParam(name = "templateId") String templateId,
+			@RequestBody String requestData, HttpServletRequest request, HttpServletResponse response) {
 		try {
-			ValueConverters converter = ValueConverters.ENGLISH_INTEGER;
-			String valueAsWords = converter.asWords(url);
-			return ResponseEntity.ok().body(valueAsWords);
+			JSONArray requestTagsArray = new JSONArray(requestData);
+			TemplateTest templateTest = templateTestService.findById(templateId).get(0);// Template saved in DB
+			InputStream inputStream = new ByteArrayInputStream(templateTest.getTemplate()); // creating inputstream from
+																							// template to create docx
+																							// file
+			XWPFDocument docx = new XWPFDocument(inputStream);
+			JSONObject tagObject;
+			// using XWPFWordExtractor Class
+			List<XWPFRun> runs;
+			String text;
+			for (XWPFParagraph p : docx.getParagraphs()) {
+				runs = p.getRuns();
+				if (runs != null) {
+					for (XWPFRun r : runs) {
+						text = r.getText(0);
+						System.out.println(text);
+						for (int i = 0; i < requestTagsArray.length(); i++) {
+							tagObject = requestTagsArray.getJSONObject(i);
+							if (text != null && text.contains(tagObject.getString("tag"))) {
+								text = text.replace(tagObject.getString("tag"), tagObject.getString("value"));// replacing
+																												// tag
+																												// key
+																												// with
+																												// tag
+																												// value
+								r.setText(text, 0); // setting The text to run in the same document
+							}
+						}
+					}
+				}
+			}
+
+			Random random = new Random(); // to generate a random fileName
+			int randomNumber = random.nextInt(987656554);
+			FileOutputStream fileOutputStream = new FileOutputStream("GeneratedDoc_" + randomNumber);
+			docx.write(fileOutputStream);// writing the updated Template to FileOutputStream
+			byte[] encoded = Files.readAllBytes(Paths.get("GeneratedDoc_" + randomNumber)); // reading the file
+																							// generated from
+																							// fileOutputStream
+			InputStream convertedInputStream = new ByteArrayInputStream(encoded);
+
+			response.setContentType("application/msword");
+			response.addHeader("Content-Disposition", "attachment; filename=" + "GeneratedDoc-" + ".docx"); // format is
+																											// important
+			IOUtils.copy(convertedInputStream, response.getOutputStream());
+			response.flushBuffer();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@RequestMapping(value = "/uploadTestTemplate", method = RequestMethod.POST)
+	public ResponseEntity<?> upload(@RequestParam(name = "templateId") String templateId,
+			@RequestParam("file") MultipartFile multipartFile, HttpSession session) throws IOException {
+		try {
+			TemplateTest templateTest = new TemplateTest();
+			templateTest.setId(templateId);
+			templateTest.setTemplate(multipartFile.getBytes());
+			templateTestService.create(templateTest);
+			return ResponseEntity.ok().body("Success!!");
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
