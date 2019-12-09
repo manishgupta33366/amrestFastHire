@@ -33,6 +33,8 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.util.EntityUtils;
 import org.apache.olingo.odata2.api.batch.BatchException;
 import org.apache.olingo.odata2.api.client.batch.BatchSingleResponse;
+import org.apache.poi.xwpf.converter.pdf.PdfConverter;
+import org.apache.poi.xwpf.converter.pdf.PdfOptions;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
@@ -203,7 +205,8 @@ public class DocGen {
 
 	@PostMapping(value = "/downloadTestTemplate")
 	public void downloadTestTemplate(@RequestParam(name = "templateId") String templateId,
-			@RequestBody String requestData, HttpServletRequest request, HttpServletResponse response) {
+			@RequestParam(name = "inPDF") Boolean inPDF, @RequestBody String requestData, HttpServletRequest request,
+			HttpServletResponse response) {
 		try {
 			JSONArray requestTagsArray = new JSONArray(requestData);
 			TemplateTest templateTest = templateTestService.findById(templateId).get(0);// Template saved in DB
@@ -239,17 +242,32 @@ public class DocGen {
 
 			Random random = new Random(); // to generate a random fileName
 			int randomNumber = random.nextInt(987656554);
-			FileOutputStream fileOutputStream = new FileOutputStream("GeneratedDoc_" + randomNumber);
-			docx.write(fileOutputStream);// writing the updated Template to FileOutputStream
-			byte[] encoded = Files.readAllBytes(Paths.get("GeneratedDoc_" + randomNumber)); // reading the file
-																							// generated from
-																							// fileOutputStream
-			InputStream convertedInputStream = new ByteArrayInputStream(encoded);
+			FileOutputStream fileOutputStream = new FileOutputStream("GeneratedDoc_" + randomNumber); // Temp location
 
-			response.setContentType("application/msword");
-			response.addHeader("Content-Disposition", "attachment; filename=" + "GeneratedDoc-" + ".docx"); // format is
-																											// important
-			IOUtils.copy(convertedInputStream, response.getOutputStream());
+			if (!inPDF) {
+				docx.write(fileOutputStream);// writing the updated Template to FileOutputStream // to save file
+				byte[] encoded = Files.readAllBytes(Paths.get("GeneratedDoc_" + randomNumber)); // reading the file
+																								// generated from
+																								// fileOutputStream
+				InputStream convertedInputStream = new ByteArrayInputStream(encoded);
+				response.setContentType("application/msword");
+				response.addHeader("Content-Disposition", "attachment; filename=" + "GeneratedDoc-" + ".docx"); // format
+																												// is //
+																												// important
+				IOUtils.copy(convertedInputStream, response.getOutputStream());
+			} else {
+				PdfOptions options = PdfOptions.create().fontEncoding("windows-1250");
+				PdfConverter.getInstance().convert(docx, fileOutputStream, options);
+				byte[] encoded = Files.readAllBytes(Paths.get("GeneratedDoc_" + randomNumber)); // reading the file
+																								// generated from
+																								// fileOutputStream
+				InputStream convertedInputStream = new ByteArrayInputStream(encoded);
+				response.setContentType("application/pdf");
+				response.addHeader("Content-Disposition", "attachment; filename=" + "GeneratedDoc-" + ".pdf"); // format
+																												// is
+																												// important
+				IOUtils.copy(convertedInputStream, response.getOutputStream());
+			}
 			response.flushBuffer();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -286,7 +304,6 @@ public class DocGen {
 	@GetMapping(value = "/executeRule")
 	public ResponseEntity<?> executeRule(@RequestParam(name = "ruleID") String ruleID, HttpServletRequest request,
 			@RequestParam(name = "fromDate") String fromDate, @RequestParam(name = "inactive") String inactive) {
-
 		try {
 			HttpSession session = request.getSession(false);// false is not create new session and use the existing
 															// session
