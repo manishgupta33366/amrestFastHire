@@ -26,6 +26,7 @@ import com.amrest.fastHire.fastDoc.model.Companies;
 import com.amrest.fastHire.fastDoc.model.ConfigurableColumns;
 import com.amrest.fastHire.fastDoc.model.ConfigurableTables;
 import com.amrest.fastHire.fastDoc.model.Countries;
+import com.amrest.fastHire.fastDoc.model.Fields;
 import com.amrest.fastHire.fastDoc.model.Groups;
 import com.amrest.fastHire.fastDoc.model.MapGroupTemplates;
 import com.amrest.fastHire.fastDoc.model.MapTemplateCriteriaValues;
@@ -49,8 +50,8 @@ import com.amrest.fastHire.fastDoc.service.MapTemplateCriteriaValuesService;
 import com.amrest.fastHire.fastDoc.service.MapTemplateFieldsService;
 import com.amrest.fastHire.fastDoc.service.OperatorsService;
 import com.amrest.fastHire.fastDoc.service.RulesService;
-import com.amrest.fastHire.fastDoc.service.TemplateFieldTagService;
 import com.amrest.fastHire.fastDoc.service.TemplateFastDocService;
+import com.amrest.fastHire.fastDoc.service.TemplateFieldTagService;
 import com.amrest.fastHire.fastDoc.utility.WordFileProcessing;
 
 @RestController
@@ -255,6 +256,21 @@ public class Configurator {
 				for (int i = 0; i < templateFieldTag.size(); i++) {
 					tempObj = new JSONObject();
 					tempJsonObj = new JSONObject(templateFieldTag.get(i).toString());
+					for (int j = 0; j < columnNames.size(); j++) {
+						tempColumnName = columnNames.get(j);
+						tempObj.put(tempColumnName,
+								tempJsonObj.has(tempColumnName) ? tempJsonObj.get(columnNames.get(j)) : "");
+					}
+					responseDataArray.put(tempObj);
+				}
+				response.put("columns", configurableColumns);
+				response.put("data", responseDataArray);
+				return ResponseEntity.ok().body(response.toString());
+			case DBConfiguration.FIELDS:
+				List<Fields> fields = fieldsService.findAll();
+				for (int i = 0; i < fields.size(); i++) {
+					tempObj = new JSONObject();
+					tempJsonObj = new JSONObject(fields.get(i).toString());
 					for (int j = 0; j < columnNames.size(); j++) {
 						tempColumnName = columnNames.get(j);
 						tempObj.put(tempColumnName,

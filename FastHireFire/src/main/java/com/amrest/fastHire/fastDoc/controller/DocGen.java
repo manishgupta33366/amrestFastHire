@@ -208,7 +208,7 @@ public class DocGen {
 			@RequestParam(name = "inPDF") Boolean inPDF, @RequestBody String requestData, HttpServletRequest request,
 			HttpServletResponse response) {
 		try {
-			JSONArray requestTagsArray = new JSONArray(requestData);
+			JSONArray requestTagsArray = new JSONObject(requestData).getJSONArray("tagsArray");
 			TemplateTest templateTest = templateTestService.findById(templateId).get(0);// Template saved in DB
 			InputStream inputStream = new ByteArrayInputStream(templateTest.getTemplate()); // creating inputstream from
 																							// template to create docx
@@ -2661,7 +2661,7 @@ public class DocGen {
 			else
 				w = w + "groszy";
 		}
-		return w;
+		return text + " " + w;
 	}
 
 	private String digitsToPolishWordsHelper(String x) {
