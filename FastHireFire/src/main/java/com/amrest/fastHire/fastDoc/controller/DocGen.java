@@ -382,7 +382,6 @@ public class DocGen {
 			String prevMonthDate = sdf_MMDDYYY.format(prevMonth);
 			String currentDate = sdf_MMDDYYY.format(new Date());
 			if (searchString == null) {
-
 				searchResponse = CommonFunctions.getDestinationCLient(CommonVariables.sfDestination).callDestinationGET(
 						"/User",
 						"?$format=json&$select=userId,firstName,lastName&$filter=firstName ne null and lastName ne null");
@@ -398,6 +397,9 @@ public class DocGen {
 				}
 
 			} else {
+				logger.debug("searchString before encoding: " + searchString);
+				searchString = new String(searchString.getBytes("ISO-8859-1"), "UTF-8");
+				logger.debug("searchString after encoding: " + searchString);
 				searchString = searchString.toLowerCase();
 				String url = "?$format=json&$select=userId,firstName,lastName&$filter=substringof('<inputParameter>',tolower(firstName)) or substringof('<inputParameter>',tolower(lastName)) or substringof('<inputParameter>',tolower(userId))";
 				url = url.replace("<inputParameter>", searchString);

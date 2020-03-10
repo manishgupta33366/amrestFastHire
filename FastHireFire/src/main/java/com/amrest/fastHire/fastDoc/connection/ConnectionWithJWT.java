@@ -55,12 +55,13 @@ public class ConnectionWithJWT {
 		payload.put("iat", now.getTime() / 1000);
 		payload.put("exp", exp.getTime() / 1000);
 		payload.put("sub", this.destination.getProperty("User"));
-
+		payload.put("email", "AMR.FASTDOC.docs@ngahr.com");
 		// Generate token
 		JwtBuilder builder = Jwts.builder().setHeader(header).setClaims(payload).signWith(SignatureAlgorithm.HS256,
 				secretBytes);
 
 		String token = builder.compact();
+		logger.debug("Generated JWT-Token:" + token);
 		return token;
 	}
 
